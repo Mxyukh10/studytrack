@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Log Session — StudyTrack</title>
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<!-- MOBILE HEADER -->
+<div class="mobile-header">
+  <div class="logo-mark">
+    <div class="logo-icon">📚</div>
+    <div class="logo-text">Study<span>Track</span></div>
+  </div>
+  <button class="hamburger" id="hamburgerBtn">☰</button>
+</div>
+
+<!-- SIDEBAR OVERLAY -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<div class="app-shell">
+
+<!-- SIDEBAR -->
+<div id="sidebar-container"></div>
+
+<!-- MAIN CONTENT -->
+<main class="main-content">
+
+<div class="date-banner">
+<div class="date-dot"></div>
+<span id="dateBannerText"></span>
+</div>
+
+<div class="page-header">
+<h1 class="page-title">Log a <span>Session</span></h1>
+<p class="page-subtitle">
+Record what you studied, for how long, and how hard you worked.
+</p>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 340px;gap:24px;align-items:start;">
+
+<!-- FORM -->
+<div class="form-card animate-in">
+
+<div class="form-grid">
+
+<div class="form-group full-width">
+
+<label class="form-label">
+<span class="label-icon">📖</span>
+Subject
+</label>
+
+<input
+type="text"
+class="form-input"
+id="inputSubject"
+placeholder="e.g. DSA, Physics, Mathematics…"
+autocomplete="off"
+/>
+
+<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;" id="subjectChips"></div>
+
+</div>
+
+<div class="form-group">
+
+<label class="form-label">
+<span class="label-icon">⏱️</span>
+Duration (minutes)
+</label>
+
+<input
+type="number"
+class="form-input"
+id="inputDuration"
+placeholder="e.g. 90"
+min="1"
+max="720"
+/>
+
+<span class="form-hint" id="durationHint">— hrs — mins</span>
+
+</div>
+
+<div class="form-group">
+
+<label class="form-label">
+<span class="label-icon">🧩</span>
+Questions Solved
+</label>
+
+<input
+type="number"
+class="form-input"
+id="inputQuestions"
+placeholder="e.g. 20"
+min="0"
+/>
+
+<span class="form-hint">Leave 0 if not applicable</span>
+
+</div>
+
+<div class="form-group">
+
+<label class="form-label">
+<span class="label-icon">📅</span>
+Date
+</label>
+
+<input
+type="date"
+class="form-input"
+id="inputDate"
+/>
+
+</div>
+
+<div class="form-group">
+
+<label class="form-label">
+<span class="label-icon">📝</span>
+Notes
+</label>
+
+<input
+type="text"
+class="form-input"
+id="inputNotes"
+placeholder="What did you cover? Any blockers?"
+/>
+
+</div>
+
+<div class="form-group full-width">
+
+<label class="form-label">
+<span class="label-icon">⚡</span>
+Difficulty
+</label>
+
+<div class="difficulty-picker">
+
+<div>
+<input type="radio" name="difficulty" value="Easy" class="diff-option" id="diffEasy">
+<label class="diff-label" for="diffEasy">😊 Easy</label>
+</div>
+
+<div>
+<input type="radio" name="difficulty" value="Medium" class="diff-option" id="diffMedium" checked>
+<label class="diff-label" for="diffMedium">😤 Medium</label>
+</div>
+
+<div>
+<input type="radio" name="difficulty" value="Hard" class="diff-option" id="diffHard">
+<label class="diff-label" for="diffHard">🔥 Hard</label>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="form-actions">
+
+<button class="btn btn-primary" id="submitSessionBtn" style="flex:1;justify-content:center;">
+✅ Save Session
+</button>
+
+<button class="btn btn-secondary" id="clearFormBtn">
+🗑️ Clear
+</button>
+
+</div>
+
+</div>
+
+<div style="display:flex;flex-direction:column;gap:16px;">
+
+<div class="card animate-in">
+
+<div class="chart-title" style="margin-bottom:14px;">
+👁️ Live Preview
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px;">
+
+<div class="preview-row">
+<span>Subject</span>
+<span id="previewSubject">—</span>
+</div>
+
+<div class="preview-row">
+<span>Duration</span>
+<span id="previewDuration">—</span>
+</div>
+
+<div class="preview-row">
+<span>Questions</span>
+<span id="previewQuestions">—</span>
+</div>
+
+<div class="preview-row">
+<span>Difficulty</span>
+<span id="previewDifficulty">Medium</span>
+</div>
+
+<div class="preview-row">
+<span>Date</span>
+<span id="previewDate">—</span>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</main>
+
+</div>
+
+<div class="toast" id="toast">
+<span id="toastMsg">Session saved!</span>
+</div>
+
+<script src="script.js"></script>
+
+<script>
+
+/* LOAD SIDEBAR */
+
+fetch("components/sidebar.html")
+.then(res => res.text())
+.then(data => {
+
+document.getElementById("sidebar-container").innerHTML = data
+
+/* ACTIVE PAGE */
+
+const links = document.querySelectorAll(".sidebar .nav-item")
+
+links.forEach(link => {
+
+const href = link.getAttribute("href")
+
+if(window.location.pathname.includes(href)){
+link.classList.add("active")
+}
+
+})
+
+/* MOBILE SIDEBAR */
+
+const hamburger = document.getElementById("hamburgerBtn")
+const sidebar = document.getElementById("sidebar")
+const overlay = document.getElementById("sidebarOverlay")
+
+if(hamburger && sidebar){
+
+hamburger.addEventListener("click", () => {
+
+sidebar.classList.toggle("open")
+overlay.classList.toggle("open")
+
+})
+
+overlay.addEventListener("click", () => {
+
+sidebar.classList.remove("open")
+overlay.classList.remove("open")
+
+})
+
+}
+
+})
+
+</script>
+
+</body>
+</html>

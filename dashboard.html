@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dashboard — StudyTrack</title>
+<meta name="description" content="StudyTrack — track your study sessions, streaks, and progress."/>
+<link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+<div class="mobile-header">
+  <div class="logo-mark">
+    <div class="logo-icon">📚</div>
+    <div class="logo-text">Study<span>Track</span></div>
+  </div>
+  <button class="hamburger" id="hamburgerBtn">☰</button>
+</div>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<div class="app-shell">
+<div id="sidebar-container"></div>
+
+<main class="main-content">
+
+<div class="date-banner">
+  <div class="date-dot"></div>
+  <span id="dateBanner"></span>
+</div>
+
+<div class="page-header page-header-row">
+  <div>
+    <h1 class="page-title"></h1>
+    <p class="page-subtitle">Here's your study performance at a glance.</p>
+  </div>
+  <a href="log.html" class="btn btn-primary">✏️ Log Session</a>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card accent-lime">
+    <span class="stat-icon">⏱️</span>
+    <div class="stat-value" id="statHoursToday">0h 0m</div>
+    <div class="stat-label">Studied Today</div>
+  </div>
+  <div class="stat-card accent-cyan">
+    <span class="stat-icon">🧩</span>
+    <div class="stat-value" id="statQuestionsToday">0</div>
+    <div class="stat-label">Questions Today</div>
+  </div>
+  <div class="stat-card accent-purple">
+    <span class="stat-icon">🔥</span>
+    <div class="stat-value" id="statStreak">0</div>
+    <div class="stat-label">Day Streak</div>
+  </div>
+  <div class="stat-card accent-orange">
+    <span class="stat-icon">📅</span>
+    <div class="stat-value" id="statWeekHours">0h</div>
+    <div class="stat-label">This Week</div>
+  </div>
+</div>
+
+<div class="charts-row">
+  <div class="card chart-card-main">
+    <div class="card-header-row">
+      <div>
+        <div class="section-title" style="margin-bottom:2px;">📈 This Week</div>
+        <div style="font-size:.78rem;color:var(--text-muted);margin-bottom:16px;">Daily study minutes</div>
+      </div>
+    </div>
+    <div style="position:relative;height:180px;">
+      <canvas id="weeklyChart" style="width:100%;height:100%;display:block;"></canvas>
+    </div>
+  </div>
+  <div class="card">
+    <div class="section-title">🎯 By Subject</div>
+    <div id="subjectBreakdown"></div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:20px;">
+  <div class="section-title">📊 Monthly Study Heatmap</div>
+  <div id="heatmapContainer" class="heatmap-grid"></div>
+</div>
+
+<div class="goals-container">
+  <div class="goal-card">
+    <div class="goal-header">Daily Goal<span id="dailyGoalText">No goal set</span></div>
+    <div class="goal-bar"><div id="dailyGoalProgress" class="goal-progress"></div></div>
+  </div>
+  <div class="goal-card">
+    <div class="goal-header">Weekly Goal<span id="weeklyGoalText">No goal set</span></div>
+    <div class="goal-bar"><div id="weeklyGoalProgress" class="goal-progress"></div></div>
+  </div>
+</div>
+
+<div class="storage-notice">
+  <span>🔒</span>
+  <span>All data is stored locally on this device. Nothing is synced across devices or sent to any server.</span>
+</div>
+
+</main>
+</div>
+
+<div class="toast" id="toast"><span id="toastMsg">Saved</span></div>
+
+<script src="script.js"></script>
+<script>
+fetch("components/sidebar.html")
+.then(r=>r.text()).then(data=>{
+  document.getElementById("sidebar-container").innerHTML=data;
+  updateStreakBadge(); // ← FIX: sidebar now exists
+  const hb=document.getElementById("hamburgerBtn"),sb=document.getElementById("sidebar"),ov=document.getElementById("sidebarOverlay");
+  if(hb&&sb){
+    hb.addEventListener("click",()=>{sb.classList.toggle("open");ov.classList.toggle("open");});
+    ov.addEventListener("click",()=>{sb.classList.remove("open");ov.classList.remove("open");});
+  }
+});
+</script>
+</body>
+</html>

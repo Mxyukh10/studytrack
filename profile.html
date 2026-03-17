@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Profile — StudyTrack</title>
+<link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+<div class="mobile-header">
+  <div class="logo-mark">
+    <div class="logo-icon">📚</div>
+    <div class="logo-text">Study<span>Track</span></div>
+  </div>
+  <button class="hamburger" id="hamburger">☰</button>
+</div>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<div class="app-shell">
+<div id="sidebar-container"></div>
+
+<main class="main-content">
+
+<div class="date-banner">
+  <div class="date-dot"></div>
+  <span id="dateBannerText"></span>
+</div>
+
+<div class="page-header">
+  <h1 class="page-title">Your <span>Profile</span></h1>
+  <p class="page-subtitle">Tell StudyTrack a little about yourself.</p>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 300px;gap:24px;align-items:start;">
+
+<div class="form-card">
+  <div class="form-grid">
+    <div class="form-group full-width"><label class="form-label">Name</label><input class="form-input" id="profileName" placeholder="Your name"/></div>
+    <div class="form-group"><label class="form-label">Age</label><input type="number" class="form-input" id="profileAge" placeholder="e.g. 19"/></div>
+    <div class="form-group"><label class="form-label">School / University</label><input class="form-input" id="profileSchool" placeholder="e.g. PES University"/></div>
+    <div class="form-group"><label class="form-label">Daily Study Goal (minutes)</label><input type="number" class="form-input" id="profileDailyGoal" placeholder="e.g. 180" min="0"/></div>
+    <div class="form-group"><label class="form-label">Weekly Study Goal (hours)</label><input type="number" class="form-input" id="profileWeeklyGoal" placeholder="e.g. 20" min="0"/></div>
+    <div class="form-actions"><button class="btn btn-primary" id="saveProfileBtn" style="flex:1;">Save Profile</button></div>
+  </div>
+  <div class="card" style="margin-top:20px;">
+    <div class="section-title">Profile Summary</div>
+    <div style="display:flex;flex-direction:column;gap:2px;margin-top:4px;">
+      <div class="summary-row"><span>Name</span><span id="summaryName">—</span></div>
+      <div class="summary-row"><span>Age</span><span id="summaryAge">—</span></div>
+      <div class="summary-row"><span>School</span><span id="summarySchool">—</span></div>
+      <div class="summary-row"><span>Daily Goal</span><span id="summaryDailyGoal">—</span></div>
+      <div class="summary-row"><span>Weekly Goal</span><span id="summaryWeeklyGoal">—</span></div>
+    </div>
+  </div>
+</div>
+
+<div>
+  <div class="section-title" style="color:#ff6b6b;">⚠ Danger Zone</div>
+  <div class="card" style="margin-top:10px;">
+    <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:16px;">This will permanently delete all your study sessions and profile data.</p>
+    <button class="btn btn-danger" id="resetDataBtn">Reset All Data</button>
+  </div>
+  <div class="storage-notice" style="margin-top:16px;"><span>🔒</span><span>Data is stored locally on this device only.</span></div>
+</div>
+
+</div>
+</main>
+</div>
+
+<div class="toast" id="toast"><span id="toastMsg">Saved</span></div>
+
+<script src="script.js"></script>
+<script>
+fetch("components/sidebar.html").then(r=>r.text()).then(data=>{
+  document.getElementById("sidebar-container").innerHTML=data;
+  updateStreakBadge(); // ← FIX
+  document.querySelectorAll(".sidebar .nav-item").forEach(l=>{
+    if(window.location.pathname.includes(l.getAttribute("href"))) l.classList.add("active");
+  });
+  const hb=document.getElementById("hamburger"),sb=document.getElementById("sidebar"),ov=document.getElementById("sidebarOverlay");
+  if(hb&&sb){
+    hb.addEventListener("click",()=>{sb.classList.toggle("open");ov.classList.toggle("open");});
+    ov.addEventListener("click",()=>{sb.classList.remove("open");ov.classList.remove("open");});
+  }
+});
+</script>
+<script>
+const USER_KEY="studytrack_user";
+function loadProfile(){
+  const u=JSON.parse(localStorage.getItem(USER_KEY)||"{}");
+  document.getElementById("profileName").value=u.name||"";
+  document.getElementById("profileAge").value=u.age||"";
+  document.getElementById("profileSchool").value=u.school||"";
+  document.getElementById("profileDailyGoal").value=u.dailyGoal||"";
+  document.getElementById("profileWeeklyGoal").value=u.weeklyGoal||"";
+  updateSummary();
+}
+function saveProfile(){
+  const u={name:document.getElementById("profileName").value.trim(),age:document.getElementById("profileAge").value.trim(),school:document.getElementById("profileSchool").value.trim(),dailyGoal:Number(document.getElementById("profileDailyGoal").value)||0,weeklyGoal:Number(document.getElementById("profileWeeklyGoal").value)||0};
+  localStorage.setItem(USER_KEY,JSON.stringify(u));
+  updateSummary(); showToast("Profile saved ✓");
+}
+function updateSummary(){
+  document.getElementById("summaryName").textContent=document.getElementById("profileName").value||"—";
+  document.getElementById("summaryAge").textContent=document.getElementById("profileAge").value||"—";
+  document.getElementById("summarySchool").textContent=document.getElementById("profileSchool").value||"—";
+  const dg=document.getElementById("profileDailyGoal").value,wg=document.getElementById("profileWeeklyGoal").value;
+  document.getElementById("summaryDailyGoal").textContent=dg?dg+" min":"—";
+  document.getElementById("summaryWeeklyGoal").textContent=wg?wg+" hrs":"—";
+}
+function showToast(msg){const t=document.getElementById("toast"),tx=document.getElementById("toastMsg");tx.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2000);}
+document.getElementById("saveProfileBtn").addEventListener("click",saveProfile);
+["profileName","profileAge","profileSchool","profileDailyGoal","profileWeeklyGoal"].forEach(id=>{document.getElementById(id).addEventListener("input",updateSummary);});
+document.getElementById("resetDataBtn").addEventListener("click",()=>{if(!confirm("Delete ALL StudyTrack data? This cannot be undone."))return;localStorage.removeItem("studytrack_sessions");localStorage.removeItem("studytrack_user");location.reload();});
+loadProfile();
+</script>
+</body>
+</html>
