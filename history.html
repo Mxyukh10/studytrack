@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>StudyTrack — History</title>
+<link rel="stylesheet" href="/style.css"/>
+<style>
+.history-hero{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1.75rem;}
+.filter-bar{display:flex;flex-wrap:wrap;gap:.75rem;align-items:flex-end;margin-bottom:1.5rem;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px 20px;}
+.filter-bar .form-group{flex:1;min-width:150px;margin:0;}
+.filter-bar .form-label{font-size:.68rem;margin-bottom:.35rem;display:block;}
+.filter-actions{display:flex;gap:.5rem;align-items:flex-end;padding-bottom:1px;}
+.btn-delete{background:transparent;border:1px solid var(--border);color:var(--text-muted);border-radius:6px;padding:.3rem .6rem;font-size:.75rem;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:.3rem;}
+.btn-delete:hover{background:rgba(248,113,113,.1);border-color:#f87171;color:#f87171;}
+.btn-edit{background:transparent;border:1px solid var(--border);color:var(--text-muted);border-radius:6px;padding:.3rem .6rem;font-size:.75rem;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:.3rem;}
+.btn-edit:hover{background:rgba(181,242,61,.08);border-color:var(--accent);color:var(--accent);}
+.action-cell{display:flex;gap:6px;}
+.sort-arrow{display:inline-block;margin-left:.3rem;opacity:.35;transition:opacity .15s;}
+th.sorted .sort-arrow{opacity:1;}
+th[data-sort]{cursor:pointer;user-select:none;}
+th[data-sort]:hover{color:var(--accent);}
+th.sorted{color:var(--accent);}
+.confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(5px);z-index:300;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;}
+.confirm-overlay.open{opacity:1;pointer-events:all;}
+.confirm-dialog{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-xl);padding:28px 28px 24px;max-width:360px;width:90%;transform:translateY(10px) scale(.97);transition:transform .2s;}
+.confirm-overlay.open .confirm-dialog{transform:translateY(0) scale(1);}
+.confirm-dialog h3{font-family:var(--font-display);font-size:1.05rem;font-weight:700;color:var(--text-primary);margin:0 0 .5rem;}
+.confirm-dialog p{font-size:.85rem;color:var(--text-muted);margin:0 0 1.5rem;}
+.confirm-actions{display:flex;gap:.75rem;justify-content:flex-end;}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);z-index:300;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal-box{background:var(--bg-card);border:1px solid var(--border-light);border-radius:var(--radius-xl);padding:28px;width:90%;max-width:500px;transform:translateY(12px) scale(.97);transition:transform .2s;max-height:90vh;overflow-y:auto;}
+.modal-overlay.open .modal-box{transform:translateY(0) scale(1);}
+.modal-title{font-family:var(--font-display);font-size:1.1rem;font-weight:700;color:var(--text-primary);margin:0 0 20px;}
+.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.modal-grid .full{grid-column:1/-1;}
+.modal-actions{display:flex;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid var(--border);}
+</style>
+</head>
+<body>
+
+<div class="mobile-header">
+  <div class="logo-mark">
+    <div class="logo-icon">📚</div>
+    <div class="logo-text">Study<span>Track</span></div>
+  </div>
+  <button class="hamburger" id="hamburger">☰</button>
+</div>
+
+<div class="toast" id="toast"><span id="toastMsg"></span></div>
+
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-dialog">
+    <h3>Delete session?</h3>
+    <p>This cannot be undone. The session will be permanently removed.</p>
+    <div class="confirm-actions">
+      <button class="btn btn-secondary btn-sm" id="confirmCancel">Cancel</button>
+      <button class="btn btn-danger btn-sm" id="confirmOk">Delete</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="editOverlay">
+  <div class="modal-box">
+    <div class="modal-title">✏️ Edit Session</div>
+    <div class="modal-grid">
+      <div class="form-group full"><label class="form-label">Subject</label><input class="form-input" id="editSubject" type="text"/></div>
+      <div class="form-group"><label class="form-label">Duration (minutes)</label><input class="form-input" id="editDuration" type="number" min="1"/></div>
+      <div class="form-group"><label class="form-label">Questions Solved</label><input class="form-input" id="editQuestions" type="number" min="0"/></div>
+      <div class="form-group"><label class="form-label">Date</label><input class="form-input" id="editDate" type="date"/></div>
+      <div class="form-group"><label class="form-label">Difficulty</label>
+        <select class="form-select" id="editDifficulty">
+          <option value="Easy">😊 Easy</option>
+          <option value="Medium">😤 Medium</option>
+          <option value="Hard">🔥 Hard</option>
+        </select>
+      </div>
+      <div class="form-group full"><label class="form-label">Notes</label><input class="form-input" id="editNotes" type="text" placeholder="Optional notes"/></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" id="editSaveBtn" style="flex:1;justify-content:center;">Save Changes</button>
+      <button class="btn btn-secondary" id="editCancelBtn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<div class="app-shell">
+<div id="sidebar-container"></div>
+
+<main class="main-content">
+
+<div class="date-banner">
+  <div class="date-dot"></div>
+  <span id="dateBannerText"></span>
+</div>
+
+<div class="history-hero">
+  <div>
+    <h1 class="page-title">Study <span>History</span></h1>
+    <p class="page-subtitle" id="heroSub">Loading…</p>
+  </div>
+  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+    <button class="btn btn-secondary btn-sm" id="exportCSVBtn">⬇️ Export CSV</button>
+    <a href="/log.html" class="btn btn-primary btn-sm">+ Log Session</a>
+  </div>
+</div>
+
+<div class="stats-grid" style="margin-bottom:24px;">
+  <div class="stat-card accent-lime"><span class="stat-icon">📚</span><div class="stat-value" id="statSessions">0</div><div class="stat-label">Total Sessions</div></div>
+  <div class="stat-card accent-cyan"><span class="stat-icon">⏱️</span><div class="stat-value" id="statHours">0.0</div><div class="stat-label">Total Hours</div></div>
+  <div class="stat-card accent-purple"><span class="stat-icon">🧩</span><div class="stat-value" id="statQuestions">0</div><div class="stat-label">Questions Done</div></div>
+  <div class="stat-card accent-orange"><span class="stat-icon">🔥</span><div class="stat-value" id="statBestSubject">—</div><div class="stat-label">Top Subject</div></div>
+</div>
+
+<div class="filter-bar">
+  <div class="form-group"><label class="form-label" for="filterSearch">Search subject</label><input type="search" id="filterSearch" class="form-input" placeholder="e.g. DSA, Physics…" autocomplete="off"/></div>
+  <div class="form-group" style="max-width:155px;"><label class="form-label" for="filterDifficulty">Difficulty</label>
+    <select id="filterDifficulty" class="form-select"><option value="">All levels</option><option value="Easy">Easy</option><option value="Medium">Medium</option><option value="Hard">Hard</option></select>
+  </div>
+  <div class="form-group" style="max-width:160px;"><label class="form-label" for="filterDateFrom">From</label><input type="date" id="filterDateFrom" class="form-input"/></div>
+  <div class="form-group" style="max-width:160px;"><label class="form-label" for="filterDateTo">To</label><input type="date" id="filterDateTo" class="form-input"/></div>
+  <div class="filter-actions"><button class="btn btn-secondary btn-sm" id="btnClearFilters">Clear</button></div>
+</div>
+
+<div class="table-card">
+  <div class="table-header"><span class="table-title">Sessions</span><span class="table-count" id="tableCount">0 results</span></div>
+  <div id="tableArea"></div>
+</div>
+
+</main>
+</div>
+
+<script src="/script.js"></script>
+<script>
+fetch("/components/sidebar.html").then(r=>r.text()).then(data=>{
+  document.getElementById("sidebar-container").innerHTML=data;
+  updateStreakBadge();
+  document.querySelectorAll(".sidebar .nav-item").forEach(l=>{
+    if(window.location.pathname.includes(l.getAttribute("href"))) l.classList.add("active");
+  });
+  const hb=document.getElementById("hamburger"),sb=document.getElementById("sidebar"),ov=document.getElementById("sidebarOverlay");
+  if(hb&&sb){
+    hb.addEventListener("click",()=>{sb.classList.toggle("open");ov.classList.toggle("open");});
+    ov.addEventListener("click",()=>{sb.classList.remove("open");ov.classList.remove("open");});
+  }
+});
+
+const LS_KEY="studytrack_sessions";
+function loadSess(){try{return JSON.parse(localStorage.getItem(LS_KEY)||"[]");}catch{return[];}}
+function saveSess(a){localStorage.setItem(LS_KEY,JSON.stringify(a));}
+function fmtDur(m){if(!m)return"–";const h=Math.floor(m/60),r=m%60;return h?r?`${h}h ${r}m`:`${h}h`:`${r}m`;}
+function fmtDate(iso){if(!iso)return"–";const[y,mo,d]=iso.split("-");const M=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];return `${M[+mo-1]} ${+d}, ${y}`;}
+function esc(s){return String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+function showToast(msg){const t=document.getElementById("toast"),tx=document.getElementById("toastMsg");if(!t)return;if(tx)tx.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2500);}
+
+document.getElementById("dateBannerText").textContent=new Date().toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric",year:"numeric"});
+
+let _sortKey="date",_sortDir=-1,_deleteIdx=null,_editIdx=null;
+
+function render(){
+  const all=loadSess();
+  const search=document.getElementById("filterSearch").value.trim().toLowerCase();
+  const diff=document.getElementById("filterDifficulty").value;
+  const from=document.getElementById("filterDateFrom").value;
+  const to=document.getElementById("filterDateTo").value;
+  const totalMins=all.reduce((s,x)=>s+(+x.duration||0),0);
+  const totalQ=all.reduce((s,x)=>s+(+x.questions||0),0);
+  document.getElementById("statSessions").textContent=all.length;
+  document.getElementById("statHours").textContent=(totalMins/60).toFixed(1);
+  document.getElementById("statQuestions").textContent=totalQ;
+  document.getElementById("heroSub").textContent=all.length===0?"No sessions logged yet":`${all.length} session${all.length!==1?"s":""} logged`;
+  const subjectMap={};
+  all.forEach(s=>{const k=s.subject||"?";subjectMap[k]=(subjectMap[k]||0)+s.duration;});
+  const topSubj=Object.entries(subjectMap).sort((a,b)=>b[1]-a[1])[0];
+  document.getElementById("statBestSubject").textContent=topSubj?topSubj[0]:"—";
+  let filtered=all.map((s,i)=>({...s,_idx:i})).filter(s=>{
+    if(search&&!(s.subject??"").toLowerCase().includes(search)) return false;
+    if(diff&&s.difficulty!==diff) return false;
+    if(from&&s.date<from) return false;
+    if(to&&s.date>to) return false;
+    return true;
+  });
+  filtered.sort((a,b)=>{
+    let va=a[_sortKey]??"",vb=b[_sortKey]??"";
+    if(_sortKey==="duration"||_sortKey==="questions"){va=Number(va);vb=Number(vb);}
+    else{va=String(va).toLowerCase();vb=String(vb).toLowerCase();}
+    return va<vb?-_sortDir:va>vb?_sortDir:0;
+  });
+  document.getElementById("tableCount").textContent=`${filtered.length} result${filtered.length!==1?"s":""}`;
+  const area=document.getElementById("tableArea");
+  if(filtered.length===0){
+    const noData=all.length===0;
+    area.innerHTML=`<div class="empty-state"><div class="empty-icon">${noData?"📚":"🔍"}</div><p class="empty-title">${noData?"No sessions yet":"No matches found"}</p><p class="empty-sub">${noData?"Start logging sessions to see history here.":"Try adjusting your filters."}</p>${noData?`<a href="/log.html" class="btn btn-primary btn-sm" style="margin-top:.75rem">Log your first session</a>`:""}</div>`;
+    return;
+  }
+  const arrow=k=>_sortKey===k?`<span class="sort-arrow">${_sortDir===-1?"↓":"↑"}</span>`:`<span class="sort-arrow">↕</span>`;
+  const sc=k=>_sortKey===k?"sorted":"";
+  const rows=filtered.map(s=>`<tr><td class="td-date">${esc(fmtDate(s.date))}</td><td class="td-subject">${esc(s.subject??"–")}</td><td class="td-duration">${esc(fmtDur(s.duration))}</td><td class="td-questions">${s.questions>0?esc(s.questions):"–"}</td><td><span class="diff-chip ${esc(s.difficulty??'')}">${esc(s.difficulty??"–")}</span></td><td class="td-notes" title="${esc(s.notes??'')}">${s.notes?esc(s.notes):`<span style="opacity:.3">—</span>`}</td><td><div class="action-cell"><button class="btn-edit" data-idx="${s._idx}">✏️</button><button class="btn-delete" data-idx="${s._idx}">🗑️</button></div></td></tr>`).join("");
+  area.innerHTML=`<div style="overflow-x:auto;"><table class="data-table"><thead><tr><th data-sort="date" class="${sc("date")}">Date${arrow("date")}</th><th data-sort="subject" class="${sc("subject")}">Subject${arrow("subject")}</th><th data-sort="duration" class="${sc("duration")}">Duration${arrow("duration")}</th><th data-sort="questions" class="${sc("questions")}">Questions${arrow("questions")}</th><th data-sort="difficulty" class="${sc("difficulty")}">Difficulty${arrow("difficulty")}</th><th>Notes</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`;
+  area.querySelectorAll("th[data-sort]").forEach(th=>{th.addEventListener("click",()=>{const k=th.dataset.sort;_sortKey===k?_sortDir*=-1:(_sortKey=k,_sortDir=-1);render();});});
+  area.querySelectorAll(".btn-delete").forEach(btn=>{btn.addEventListener("click",()=>{_deleteIdx=parseInt(btn.dataset.idx,10);document.getElementById("confirmOverlay").classList.add("open");});});
+  area.querySelectorAll(".btn-edit").forEach(btn=>{btn.addEventListener("click",()=>{_editIdx=parseInt(btn.dataset.idx,10);const s=loadSess()[_editIdx];if(!s)return;document.getElementById("editSubject").value=s.subject||"";document.getElementById("editDuration").value=s.duration||"";document.getElementById("editQuestions").value=s.questions||"";document.getElementById("editDate").value=s.date||"";document.getElementById("editDifficulty").value=s.difficulty||"Medium";document.getElementById("editNotes").value=s.notes||"";document.getElementById("editOverlay").classList.add("open");});});
+}
+
+document.getElementById("confirmCancel").addEventListener("click",()=>{document.getElementById("confirmOverlay").classList.remove("open");_deleteIdx=null;});
+document.getElementById("confirmOk").addEventListener("click",()=>{if(_deleteIdx===null)return;const s=loadSess();s.splice(_deleteIdx,1);saveSess(s);document.getElementById("confirmOverlay").classList.remove("open");_deleteIdx=null;render();showToast("Session deleted");});
+document.getElementById("confirmOverlay").addEventListener("click",e=>{if(e.target===document.getElementById("confirmOverlay")){document.getElementById("confirmOverlay").classList.remove("open");_deleteIdx=null;}});
+document.getElementById("editSaveBtn").addEventListener("click",()=>{if(_editIdx===null)return;const subj=document.getElementById("editSubject").value.trim();const dur=parseInt(document.getElementById("editDuration").value);if(!subj||!dur){showToast("Subject and duration required");return;}const s=loadSess();s[_editIdx]={...s[_editIdx],subject:subj,duration:dur,questions:parseInt(document.getElementById("editQuestions").value)||0,date:document.getElementById("editDate").value||s[_editIdx].date,difficulty:document.getElementById("editDifficulty").value,notes:document.getElementById("editNotes").value.trim()};saveSess(s);document.getElementById("editOverlay").classList.remove("open");_editIdx=null;render();showToast("Session updated ✓");});
+document.getElementById("editCancelBtn").addEventListener("click",()=>{document.getElementById("editOverlay").classList.remove("open");_editIdx=null;});
+document.getElementById("editOverlay").addEventListener("click",e=>{if(e.target===document.getElementById("editOverlay")){document.getElementById("editOverlay").classList.remove("open");_editIdx=null;}});
+["filterSearch","filterDifficulty","filterDateFrom","filterDateTo"].forEach(id=>{document.getElementById(id).addEventListener("input",render);document.getElementById(id).addEventListener("change",render);});
+document.getElementById("btnClearFilters").addEventListener("click",()=>{["filterSearch","filterDifficulty","filterDateFrom","filterDateTo"].forEach(id=>document.getElementById(id).value="");render();});
+document.getElementById("exportCSVBtn").addEventListener("click",()=>{const sessions=loadSess();if(!sessions.length){showToast("No sessions to export");return;}const headers=["Date","Subject","Duration (min)","Questions","Difficulty","Notes"];const rows=sessions.map(s=>[s.date||"",(s.subject||"").replace(/,/g,";"),s.duration||0,s.questions||0,s.difficulty||"",(s.notes||"").replace(/,/g,";").replace(/\n/g," ")]);const csv=[headers,...rows].map(r=>r.join(",")).join("\n");const blob=new Blob([csv],{type:"text/csv"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`studytrack_${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(a.href);showToast("CSV exported ✓");});
+
+render();
+</script>
+</body>
+</html>
