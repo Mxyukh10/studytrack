@@ -24,7 +24,6 @@ function initDateBanner() {
 }
 
 function initGreeting() {
-  // Only run on dashboard
   if (!window.location.pathname.includes("dashboard")) return;
   const title = document.querySelector(".page-title");
   if (!title) return;
@@ -65,6 +64,8 @@ function showToast(msg) {
 }
 
 function initProfile() {
+  // Profile page handles itself — skip
+  if (window.location.pathname.includes("profile")) return;
   const saveBtn=document.getElementById("saveProfileBtn");
   if (!saveBtn) return;
   const name=document.getElementById("profileName"),
