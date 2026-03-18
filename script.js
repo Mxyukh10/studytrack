@@ -1,37 +1,20 @@
 "use strict";
 
-/* ============================================
-   STORAGE KEYS
-============================================ */
 const SESSION_KEY = "studytrack_sessions";
 const USER_KEY    = "studytrack_user";
 
-/* ============================================
-   STORAGE HELPERS
-============================================ */
 function loadSessions() {
   try { return JSON.parse(localStorage.getItem(SESSION_KEY) || "[]"); }
   catch { return []; }
 }
-function saveSessions(arr) {
-  localStorage.setItem(SESSION_KEY, JSON.stringify(arr));
-}
-function addSession(session) {
-  const sessions = loadSessions();
-  sessions.push(session);
-  saveSessions(sessions);
-}
+function saveSessions(arr) { localStorage.setItem(SESSION_KEY, JSON.stringify(arr)); }
+function addSession(session) { const s=loadSessions(); s.push(session); saveSessions(s); }
 function getUser() {
   try { return JSON.parse(localStorage.getItem(USER_KEY) || "{}"); }
   catch { return {}; }
 }
-function saveUser(user) {
-  localStorage.setItem(USER_KEY, JSON.stringify(user));
-}
+function saveUser(user) { localStorage.setItem(USER_KEY, JSON.stringify(user)); }
 
-/* ============================================
-   DATE BANNER
-============================================ */
 function initDateBanner() {
   const el = document.getElementById("dateBanner") || document.getElementById("dateBannerText");
   if (!el) return;
@@ -40,10 +23,8 @@ function initDateBanner() {
   });
 }
 
-/* ============================================
-   GREETING
-============================================ */
 function initGreeting() {
+  // Only run on dashboard
   if (!window.location.pathname.includes("dashboard")) return;
   const title = document.querySelector(".page-title");
   if (!title) return;
@@ -54,9 +35,6 @@ function initGreeting() {
   title.innerHTML = name ? `${greeting}, <span>${name}</span>` : greeting;
 }
 
-/* ============================================
-   STREAK
-============================================ */
 function getStreak() {
   const sessions = loadSessions();
   if (!sessions.length) return 0;
@@ -76,9 +54,6 @@ function updateStreakBadge() {
   if (el) el.textContent = `${getStreak()} days`;
 }
 
-/* ============================================
-   TOAST
-============================================ */
 let toastTimer=null;
 function showToast(msg) {
   const toast=document.getElementById("toast"), text=document.getElementById("toastMsg");
@@ -89,9 +64,6 @@ function showToast(msg) {
   toastTimer=setTimeout(()=>toast.classList.remove("show"),2500);
 }
 
-/* ============================================
-   PROFILE
-============================================ */
 function initProfile() {
   const saveBtn=document.getElementById("saveProfileBtn");
   if (!saveBtn) return;
@@ -118,9 +90,6 @@ function initProfile() {
   });
 }
 
-/* ============================================
-   LOG PAGE
-============================================ */
 function initLogPage() {
   const btnSave=document.getElementById("submitSessionBtn");
   if (!btnSave) return;
@@ -150,9 +119,6 @@ function initLogPage() {
   });
 }
 
-/* ============================================
-   DASHBOARD STATS
-============================================ */
 function initDashboardStats() {
   const sessions=loadSessions(), todayISO=new Date().toISOString().slice(0,10);
   const todaySess=sessions.filter(s=>s.date===todayISO);
@@ -185,9 +151,6 @@ function initDashboardStats() {
   if(weeklyBar)  weeklyBar.style.width=weeklyGoal?Math.min((weekMins/(weeklyGoal*60))*100,100)+"%":"0%";
 }
 
-/* ============================================
-   WEEKLY BAR CHART (canvas, no deps)
-============================================ */
 function initWeeklyChart() {
   const canvas=document.getElementById("weeklyChart");
   if(!canvas) return;
@@ -211,7 +174,6 @@ function initWeeklyChart() {
     const maxVal=Math.max(...data,60);
     const barW=(chartW/7)*0.5;
     ctx.clearRect(0,0,cW,cH);
-    // grid
     for(let i=0;i<=4;i++){
       const y=pT+(chartH/4)*i;
       ctx.beginPath(); ctx.strokeStyle="rgba(255,255,255,0.04)"; ctx.lineWidth=1;
@@ -220,7 +182,6 @@ function initWeeklyChart() {
       ctx.fillStyle="rgba(255,255,255,0.2)"; ctx.font="10px DM Mono,monospace";
       ctx.textAlign="right"; ctx.fillText(val+"m",pL-4,y+4);
     }
-    // bars
     data.forEach((val,i)=>{
       const slotW=chartW/7;
       const x=pL+slotW*i+(slotW-barW)/2;
@@ -244,18 +205,15 @@ function initWeeklyChart() {
       ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y);
       ctx.closePath(); ctx.fill();
       ctx.shadowBlur=0;
-      // value label above bar
       if(val>0){
         ctx.fillStyle=isToday?"rgba(181,242,61,0.9)":"rgba(255,255,255,0.4)";
         ctx.font="9px DM Mono,monospace"; ctx.textAlign="center";
         ctx.fillText(val+"m",x+barW/2,y-5);
       }
-      // today dot
       if(isToday){
         ctx.beginPath(); ctx.arc(x+barW/2,pT+chartH+18,3,0,Math.PI*2);
         ctx.fillStyle="rgba(181,242,61,0.9)"; ctx.fill();
       }
-      // day label
       ctx.fillStyle=isToday?"rgba(181,242,61,0.9)":"rgba(255,255,255,0.28)";
       ctx.font=`${isToday?"bold ":""}11px DM Mono,monospace`;
       ctx.textAlign="center"; ctx.fillText(labels[i],x+barW/2,cH-pB+20);
@@ -265,9 +223,6 @@ function initWeeklyChart() {
   window.addEventListener("resize",draw);
 }
 
-/* ============================================
-   SUBJECT BREAKDOWN
-============================================ */
 function initSubjectBreakdown() {
   const container=document.getElementById("subjectBreakdown");
   if(!container) return;
@@ -279,9 +234,8 @@ function initSubjectBreakdown() {
   const map={};
   sessions.forEach(s=>{
     const key=s.subject||"Unknown";
-    if(!map[key]) map[key]={mins:0,count:0,sessions:[]};
+    if(!map[key]) map[key]={mins:0,count:0};
     map[key].mins+=s.duration; map[key].count++;
-    map[key].sessions.push(s);
   });
   const total=Object.values(map).reduce((s,v)=>s+v.mins,0);
   const sorted=Object.entries(map).sort((a,b)=>b[1].mins-a[1].mins).slice(0,6);
@@ -304,9 +258,6 @@ function initSubjectBreakdown() {
   }).join("");
 }
 
-/* ============================================
-   HEATMAP
-============================================ */
 function initHeatmap() {
   const container=document.getElementById("heatmapContainer");
   if(!container) return;
@@ -347,9 +298,6 @@ function initHeatmap() {
   }
 }
 
-/* ============================================
-   INIT
-============================================ */
 document.addEventListener("DOMContentLoaded",()=>{
   initDateBanner(); initGreeting(); initProfile();
   initLogPage(); initDashboardStats(); initWeeklyChart();
