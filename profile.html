@@ -39,7 +39,6 @@
 
 <div class="app-shell">
 
-<!-- SIDEBAR INLINED DIRECTLY - no fetch needed -->
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-logo">
     <div class="logo-mark">
@@ -122,17 +121,36 @@
 
 <div class="toast" id="toast"><span id="toastMsg">Saved</span></div>
 
-<script src="/script.js"></script>
+<!-- NOTE: NO script.js here — fully standalone -->
 <script>
-// Mobile hamburger
+const USER_KEY = "studytrack_user";
+const SESSION_KEY = "studytrack_sessions";
+
+// Streak
+function getStreak(){
+  try{
+    const sessions=JSON.parse(localStorage.getItem(SESSION_KEY)||"[]");
+    if(!sessions.length) return 0;
+    const dates=[...new Set(sessions.map(s=>s.date))].sort((a,b)=>new Date(b)-new Date(a));
+    let streak=0,current=new Date(); current.setHours(0,0,0,0);
+    for(let d of dates){
+      const sd=new Date(d); sd.setHours(0,0,0,0);
+      const diff=(current-sd)/86400000;
+      if(diff===0){streak++;current.setDate(current.getDate()-1);}
+      else if(diff===1&&streak===0){streak++;current.setDate(current.getDate()-2);}
+      else break;
+    }
+    return streak;
+  }catch{return 0;}
+}
+document.getElementById("sidebarStreak").textContent = getStreak()+" days";
+
+// Mobile sidebar
 const hb=document.getElementById("hamburger"),sb=document.getElementById("sidebar"),ov=document.getElementById("sidebarOverlay");
 if(hb&&sb){
   hb.addEventListener("click",()=>{sb.classList.toggle("open");ov.classList.toggle("open");});
   ov.addEventListener("click",()=>{sb.classList.remove("open");ov.classList.remove("open");});
 }
-
-// Streak badge
-updateStreakBadge();
 
 // Date banner
 document.getElementById("dateBannerText").textContent = new Date().toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric",year:"numeric"});
@@ -141,33 +159,41 @@ document.getElementById("dateBannerText").textContent = new Date().toLocaleDateS
 function toast(msg){
   const t=document.getElementById("toast"),tx=document.getElementById("toastMsg");
   tx.textContent=msg; t.classList.add("show");
-  setTimeout(()=>t.classList.remove("show"),2000);
+  setTimeout(()=>t.classList.remove("show"),2500);
 }
 
-const USER_KEY = "studytrack_user";
-
-function loadProfile(){
-  const u = JSON.parse(localStorage.getItem(USER_KEY)||"{}");
-  document.getElementById("profileName").value = u.name||"";
-  document.getElementById("profileAge").value = u.age||"";
-  document.getElementById("profileSchool").value = u.school||"";
-  document.getElementById("profileDailyGoal").value = u.dailyGoal||"";
-  document.getElementById("profileWeeklyGoal").value = u.weeklyGoal||"";
-  updateSummary();
-}
-
+// Summary update
 function updateSummary(){
   document.getElementById("summaryName").textContent = document.getElementById("profileName").value||"—";
   document.getElementById("summaryAge").textContent = document.getElementById("profileAge").value||"—";
   document.getElementById("summarySchool").textContent = document.getElementById("profileSchool").value||"—";
-  const dg = document.getElementById("profileDailyGoal").value;
-  const wg = document.getElementById("profileWeeklyGoal").value;
+  const dg=document.getElementById("profileDailyGoal").value;
+  const wg=document.getElementById("profileWeeklyGoal").value;
   document.getElementById("summaryDailyGoal").textContent = dg ? dg+" min" : "—";
   document.getElementById("summaryWeeklyGoal").textContent = wg ? wg+" hrs" : "—";
 }
 
+// Load saved profile
+function loadProfile(){
+  try{
+    const u=JSON.parse(localStorage.getItem(USER_KEY)||"{}");
+    document.getElementById("profileName").value = u.name||"";
+    document.getElementById("profileAge").value = u.age||"";
+    document.getElementById("profileSchool").value = u.school||"";
+    document.getElementById("profileDailyGoal").value = u.dailyGoal||"";
+    document.getElementById("profileWeeklyGoal").value = u.weeklyGoal||"";
+  }catch{}
+  updateSummary();
+}
+
+// Live update summary as user types
+["profileName","profileAge","profileSchool","profileDailyGoal","profileWeeklyGoal"].forEach(id=>{
+  document.getElementById(id).addEventListener("input", updateSummary);
+});
+
+// Save
 document.getElementById("saveProfileBtn").addEventListener("click", ()=>{
-  const u = {
+  const u={
     name: document.getElementById("profileName").value.trim(),
     age: document.getElementById("profileAge").value.trim(),
     school: document.getElementById("profileSchool").value.trim(),
@@ -179,22 +205,19 @@ document.getElementById("saveProfileBtn").addEventListener("click", ()=>{
   toast("Profile saved ✓");
 });
 
-["profileName","profileAge","profileSchool","profileDailyGoal","profileWeeklyGoal"].forEach(id=>{
-  document.getElementById(id).addEventListener("input", updateSummary);
-});
-
-document.getElementById("resetDataBtn").addEventListener("click", ()=>{
+// Reset
+document.getElementById("resetDataBtn").addEventListener("click",()=>{
   document.getElementById("confirmOverlay").classList.add("open");
 });
-document.getElementById("confirmCancel").addEventListener("click", ()=>{
+document.getElementById("confirmCancel").addEventListener("click",()=>{
   document.getElementById("confirmOverlay").classList.remove("open");
 });
-document.getElementById("confirmOk").addEventListener("click", ()=>{
-  localStorage.removeItem("studytrack_sessions");
-  localStorage.removeItem("studytrack_user");
+document.getElementById("confirmOk").addEventListener("click",()=>{
+  localStorage.removeItem(SESSION_KEY);
+  localStorage.removeItem(USER_KEY);
   document.getElementById("confirmOverlay").classList.remove("open");
   toast("All data cleared!");
-  setTimeout(()=>{ location.reload(); }, 1000);
+  setTimeout(()=>location.reload(), 1000);
 });
 
 loadProfile();
