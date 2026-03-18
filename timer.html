@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Study Timer — StudyTrack</title>
-<link rel="stylesheet" href="style.css"/>
+<link rel="stylesheet" href="/style.css"/>
 <style>
 .timer-page{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:calc(100vh - 64px);gap:0;text-align:center;padding:40px 32px;}
 .timer-title{font-family:var(--font-display);font-size:2.4rem;font-weight:800;color:var(--text-primary);letter-spacing:-.5px;margin-bottom:8px;}
@@ -66,11 +66,11 @@
 
 <div class="toast" id="toast"><span id="toastMsg"></span></div>
 
-<script src="script.js"></script>
+<script src="/script.js"></script>
 <script>
-fetch("components/sidebar.html").then(r=>r.text()).then(data=>{
+fetch("/components/sidebar.html").then(r=>r.text()).then(data=>{
   document.getElementById("sidebar-container").innerHTML=data;
-  updateStreakBadge(); // ← FIX
+  updateStreakBadge();
   document.querySelectorAll(".sidebar .nav-item").forEach(l=>{
     if(window.location.pathname.includes(l.getAttribute("href"))) l.classList.add("active");
   });
@@ -124,7 +124,7 @@ function stopTimer(){
   if(minutes===0&&seconds>0)minutes=1;
   if(minutes===0){showToast("Start the timer first!");return;}
   showToast(`Logged ${minutes} min — redirecting…`);
-  setTimeout(()=>{window.location.href="log.html?subject="+encodeURIComponent(subj)+"&duration="+minutes;},900);
+  setTimeout(()=>{window.location.href="/log.html?subject="+encodeURIComponent(subj)+"&duration="+minutes;},900);
 }
 
 const canvas=document.getElementById("waveformCanvas"),ctx=canvas.getContext("2d"),wrap=document.getElementById("waveformWrap");

@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Profile — StudyTrack</title>
-<link rel="stylesheet" href="style.css"/>
+<link rel="stylesheet" href="/style.css"/>
 </head>
 <body>
 
@@ -71,11 +71,11 @@
 
 <div class="toast" id="toast"><span id="toastMsg">Saved</span></div>
 
-<script src="script.js"></script>
+<script src="/script.js"></script>
 <script>
-fetch("components/sidebar.html").then(r=>r.text()).then(data=>{
+fetch("/components/sidebar.html").then(r=>r.text()).then(data=>{
   document.getElementById("sidebar-container").innerHTML=data;
-  updateStreakBadge(); // ← FIX
+  updateStreakBadge();
   document.querySelectorAll(".sidebar .nav-item").forEach(l=>{
     if(window.location.pathname.includes(l.getAttribute("href"))) l.classList.add("active");
   });
@@ -85,8 +85,7 @@ fetch("components/sidebar.html").then(r=>r.text()).then(data=>{
     ov.addEventListener("click",()=>{sb.classList.remove("open");ov.classList.remove("open");});
   }
 });
-</script>
-<script>
+
 const USER_KEY="studytrack_user";
 function loadProfile(){
   const u=JSON.parse(localStorage.getItem(USER_KEY)||"{}");
