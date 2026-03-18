@@ -42,7 +42,9 @@
     <div class="form-group"><label class="form-label">School / University</label><input class="form-input" id="profileSchool" placeholder="e.g. PES University"/></div>
     <div class="form-group"><label class="form-label">Daily Study Goal (minutes)</label><input type="number" class="form-input" id="profileDailyGoal" placeholder="e.g. 180" min="0"/></div>
     <div class="form-group"><label class="form-label">Weekly Study Goal (hours)</label><input type="number" class="form-input" id="profileWeeklyGoal" placeholder="e.g. 20" min="0"/></div>
-    <div class="form-actions"><button class="btn btn-primary" id="saveProfileBtn" style="flex:1;">Save Profile</button></div>
+  </div>
+  <div class="form-actions">
+    <button class="btn btn-primary" id="saveProfileBtn" style="flex:1;">Save Profile</button>
   </div>
   <div class="card" style="margin-top:20px;">
     <div class="section-title">Profile Summary</div>
@@ -74,7 +76,7 @@
 <script src="/script.js"></script>
 <script>
 fetch("/components/sidebar.html").then(r=>r.text()).then(data=>{
-  document.getElementById("sidebar-container").innerHTML=data;
+  document.getElementById("sidebar-container").innerHTML = data;
   updateStreakBadge();
   document.querySelectorAll(".sidebar .nav-item").forEach(l=>{
     if(window.location.pathname.includes(l.getAttribute("href"))) l.classList.add("active");
@@ -86,33 +88,64 @@ fetch("/components/sidebar.html").then(r=>r.text()).then(data=>{
   }
 });
 
-const USER_KEY="studytrack_user";
+document.getElementById("dateBannerText").textContent = new Date().toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric",year:"numeric"});
+
+function showProfileToast(msg){
+  const t=document.getElementById("toast"),tx=document.getElementById("toastMsg");
+  tx.textContent=msg;
+  t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"),2000);
+}
+
+const USER_KEY = "studytrack_user";
+
 function loadProfile(){
-  const u=JSON.parse(localStorage.getItem(USER_KEY)||"{}");
-  document.getElementById("profileName").value=u.name||"";
-  document.getElementById("profileAge").value=u.age||"";
-  document.getElementById("profileSchool").value=u.school||"";
-  document.getElementById("profileDailyGoal").value=u.dailyGoal||"";
-  document.getElementById("profileWeeklyGoal").value=u.weeklyGoal||"";
+  const u = JSON.parse(localStorage.getItem(USER_KEY)||"{}");
+  document.getElementById("profileName").value = u.name||"";
+  document.getElementById("profileAge").value = u.age||"";
+  document.getElementById("profileSchool").value = u.school||"";
+  document.getElementById("profileDailyGoal").value = u.dailyGoal||"";
+  document.getElementById("profileWeeklyGoal").value = u.weeklyGoal||"";
   updateSummary();
 }
+
 function saveProfile(){
-  const u={name:document.getElementById("profileName").value.trim(),age:document.getElementById("profileAge").value.trim(),school:document.getElementById("profileSchool").value.trim(),dailyGoal:Number(document.getElementById("profileDailyGoal").value)||0,weeklyGoal:Number(document.getElementById("profileWeeklyGoal").value)||0};
-  localStorage.setItem(USER_KEY,JSON.stringify(u));
-  updateSummary(); showToast("Profile saved ✓");
+  const u = {
+    name: document.getElementById("profileName").value.trim(),
+    age: document.getElementById("profileAge").value.trim(),
+    school: document.getElementById("profileSchool").value.trim(),
+    dailyGoal: Number(document.getElementById("profileDailyGoal").value)||0,
+    weeklyGoal: Number(document.getElementById("profileWeeklyGoal").value)||0
+  };
+  localStorage.setItem(USER_KEY, JSON.stringify(u));
+  updateSummary();
+  showProfileToast("Profile saved ✓");
 }
+
 function updateSummary(){
-  document.getElementById("summaryName").textContent=document.getElementById("profileName").value||"—";
-  document.getElementById("summaryAge").textContent=document.getElementById("profileAge").value||"—";
-  document.getElementById("summarySchool").textContent=document.getElementById("profileSchool").value||"—";
-  const dg=document.getElementById("profileDailyGoal").value,wg=document.getElementById("profileWeeklyGoal").value;
-  document.getElementById("summaryDailyGoal").textContent=dg?dg+" min":"—";
-  document.getElementById("summaryWeeklyGoal").textContent=wg?wg+" hrs":"—";
+  document.getElementById("summaryName").textContent = document.getElementById("profileName").value||"—";
+  document.getElementById("summaryAge").textContent = document.getElementById("profileAge").value||"—";
+  document.getElementById("summarySchool").textContent = document.getElementById("profileSchool").value||"—";
+  const dg = document.getElementById("profileDailyGoal").value;
+  const wg = document.getElementById("profileWeeklyGoal").value;
+  document.getElementById("summaryDailyGoal").textContent = dg ? dg+" min" : "—";
+  document.getElementById("summaryWeeklyGoal").textContent = wg ? wg+" hrs" : "—";
 }
-function showToast(msg){const t=document.getElementById("toast"),tx=document.getElementById("toastMsg");tx.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2000);}
-document.getElementById("saveProfileBtn").addEventListener("click",saveProfile);
-["profileName","profileAge","profileSchool","profileDailyGoal","profileWeeklyGoal"].forEach(id=>{document.getElementById(id).addEventListener("input",updateSummary);});
-document.getElementById("resetDataBtn").addEventListener("click",()=>{if(!confirm("Delete ALL StudyTrack data? This cannot be undone."))return;localStorage.removeItem("studytrack_sessions");localStorage.removeItem("studytrack_user");location.reload();});
+
+document.getElementById("saveProfileBtn").addEventListener("click", saveProfile);
+
+["profileName","profileAge","profileSchool","profileDailyGoal","profileWeeklyGoal"].forEach(id=>{
+  document.getElementById(id).addEventListener("input", updateSummary);
+});
+
+document.getElementById("resetDataBtn").addEventListener("click", ()=>{
+  if(!confirm("Delete ALL StudyTrack data? This cannot be undone.")) return;
+  localStorage.removeItem("studytrack_sessions");
+  localStorage.removeItem("studytrack_user");
+  showProfileToast("All data cleared!");
+  setTimeout(()=>{ location.reload(); }, 1000);
+});
+
 loadProfile();
 </script>
 </body>
