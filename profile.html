@@ -26,7 +26,6 @@
 
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-<!-- Custom confirm dialog (replaces browser confirm()) -->
 <div class="confirm-overlay" id="confirmOverlay">
   <div class="confirm-dialog">
     <h3>Reset all data?</h3>
@@ -39,7 +38,37 @@
 </div>
 
 <div class="app-shell">
-<div id="sidebar-container"></div>
+
+<!-- SIDEBAR INLINED DIRECTLY - no fetch needed -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">
+      <div class="logo-icon">📚</div>
+      <div>
+        <div class="logo-text">Study<span>Track</span></div>
+        <div class="logo-tagline">// track · improve · repeat</div>
+      </div>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-label">Main</div>
+    <a href="/dashboard.html" class="nav-item"><span class="nav-icon">📊</span>Dashboard</a>
+    <a href="/log.html" class="nav-item"><span class="nav-icon">✏️</span>Log Session</a>
+    <a href="/history.html" class="nav-item"><span class="nav-icon">📋</span>History</a>
+    <div class="nav-label" style="margin-top:8px;">Settings</div>
+    <a href="/profile.html" class="nav-item active"><span class="nav-icon">👤</span>Profile</a>
+    <a href="/timer.html" class="nav-item"><span class="nav-icon">⏱️</span>Timer</a>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="streak-badge">
+      <div class="streak-fire">🔥</div>
+      <div class="streak-info">
+        <div class="streak-count" id="sidebarStreak">0 days</div>
+        <div class="streak-label">current streak</div>
+      </div>
+    </div>
+  </div>
+</aside>
 
 <main class="main-content">
 
@@ -95,19 +124,15 @@
 
 <script src="/script.js"></script>
 <script>
-// Load sidebar
-fetch("/components/sidebar.html").then(r=>r.text()).then(data=>{
-  document.getElementById("sidebar-container").innerHTML = data;
-  updateStreakBadge();
-  document.querySelectorAll(".sidebar .nav-item").forEach(l=>{
-    if(window.location.pathname.includes(l.getAttribute("href"))) l.classList.add("active");
-  });
-  const hb=document.getElementById("hamburger"),sb=document.getElementById("sidebar"),ov=document.getElementById("sidebarOverlay");
-  if(hb&&sb){
-    hb.addEventListener("click",()=>{sb.classList.toggle("open");ov.classList.toggle("open");});
-    ov.addEventListener("click",()=>{sb.classList.remove("open");ov.classList.remove("open");});
-  }
-});
+// Mobile hamburger
+const hb=document.getElementById("hamburger"),sb=document.getElementById("sidebar"),ov=document.getElementById("sidebarOverlay");
+if(hb&&sb){
+  hb.addEventListener("click",()=>{sb.classList.toggle("open");ov.classList.toggle("open");});
+  ov.addEventListener("click",()=>{sb.classList.remove("open");ov.classList.remove("open");});
+}
+
+// Streak badge
+updateStreakBadge();
 
 // Date banner
 document.getElementById("dateBannerText").textContent = new Date().toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric",year:"numeric"});
@@ -158,7 +183,6 @@ document.getElementById("saveProfileBtn").addEventListener("click", ()=>{
   document.getElementById(id).addEventListener("input", updateSummary);
 });
 
-// Custom confirm dialog for reset
 document.getElementById("resetDataBtn").addEventListener("click", ()=>{
   document.getElementById("confirmOverlay").classList.add("open");
 });
