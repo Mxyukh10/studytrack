@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Profile — StudyTrack</title>
 <link rel="stylesheet" href="/style.css"/>
+<style>
+.confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(5px);z-index:300;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;}
+.confirm-overlay.open{opacity:1;pointer-events:all;}
+.confirm-dialog{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-xl);padding:28px 28px 24px;max-width:360px;width:90%;}
+.confirm-dialog h3{font-family:var(--font-display);font-size:1.05rem;font-weight:700;color:var(--text-primary);margin:0 0 .5rem;}
+.confirm-dialog p{font-size:.85rem;color:var(--text-muted);margin:0 0 1.5rem;}
+.confirm-actions{display:flex;gap:.75rem;justify-content:flex-end;}
+</style>
 </head>
 <body>
 
@@ -17,6 +25,18 @@
 </div>
 
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- Custom confirm dialog (replaces browser confirm()) -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-dialog">
+    <h3>Reset all data?</h3>
+    <p>This will permanently delete all your study sessions and profile data. This cannot be undone.</p>
+    <div class="confirm-actions">
+      <button class="btn btn-secondary btn-sm" id="confirmCancel">Cancel</button>
+      <button class="btn btn-danger btn-sm" id="confirmOk">Yes, delete everything</button>
+    </div>
+  </div>
+</div>
 
 <div class="app-shell">
 <div id="sidebar-container"></div>
@@ -75,6 +95,7 @@
 
 <script src="/script.js"></script>
 <script>
+// Load sidebar
 fetch("/components/sidebar.html").then(r=>r.text()).then(data=>{
   document.getElementById("sidebar-container").innerHTML = data;
   updateStreakBadge();
@@ -88,12 +109,13 @@ fetch("/components/sidebar.html").then(r=>r.text()).then(data=>{
   }
 });
 
+// Date banner
 document.getElementById("dateBannerText").textContent = new Date().toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric",year:"numeric"});
 
-function showProfileToast(msg){
+// Toast
+function toast(msg){
   const t=document.getElementById("toast"),tx=document.getElementById("toastMsg");
-  tx.textContent=msg;
-  t.classList.add("show");
+  tx.textContent=msg; t.classList.add("show");
   setTimeout(()=>t.classList.remove("show"),2000);
 }
 
@@ -109,19 +131,6 @@ function loadProfile(){
   updateSummary();
 }
 
-function saveProfile(){
-  const u = {
-    name: document.getElementById("profileName").value.trim(),
-    age: document.getElementById("profileAge").value.trim(),
-    school: document.getElementById("profileSchool").value.trim(),
-    dailyGoal: Number(document.getElementById("profileDailyGoal").value)||0,
-    weeklyGoal: Number(document.getElementById("profileWeeklyGoal").value)||0
-  };
-  localStorage.setItem(USER_KEY, JSON.stringify(u));
-  updateSummary();
-  showProfileToast("Profile saved ✓");
-}
-
 function updateSummary(){
   document.getElementById("summaryName").textContent = document.getElementById("profileName").value||"—";
   document.getElementById("summaryAge").textContent = document.getElementById("profileAge").value||"—";
@@ -132,17 +141,35 @@ function updateSummary(){
   document.getElementById("summaryWeeklyGoal").textContent = wg ? wg+" hrs" : "—";
 }
 
-document.getElementById("saveProfileBtn").addEventListener("click", saveProfile);
+document.getElementById("saveProfileBtn").addEventListener("click", ()=>{
+  const u = {
+    name: document.getElementById("profileName").value.trim(),
+    age: document.getElementById("profileAge").value.trim(),
+    school: document.getElementById("profileSchool").value.trim(),
+    dailyGoal: Number(document.getElementById("profileDailyGoal").value)||0,
+    weeklyGoal: Number(document.getElementById("profileWeeklyGoal").value)||0
+  };
+  localStorage.setItem(USER_KEY, JSON.stringify(u));
+  updateSummary();
+  toast("Profile saved ✓");
+});
 
 ["profileName","profileAge","profileSchool","profileDailyGoal","profileWeeklyGoal"].forEach(id=>{
   document.getElementById(id).addEventListener("input", updateSummary);
 });
 
+// Custom confirm dialog for reset
 document.getElementById("resetDataBtn").addEventListener("click", ()=>{
-  if(!confirm("Delete ALL StudyTrack data? This cannot be undone.")) return;
+  document.getElementById("confirmOverlay").classList.add("open");
+});
+document.getElementById("confirmCancel").addEventListener("click", ()=>{
+  document.getElementById("confirmOverlay").classList.remove("open");
+});
+document.getElementById("confirmOk").addEventListener("click", ()=>{
   localStorage.removeItem("studytrack_sessions");
   localStorage.removeItem("studytrack_user");
-  showProfileToast("All data cleared!");
+  document.getElementById("confirmOverlay").classList.remove("open");
+  toast("All data cleared!");
   setTimeout(()=>{ location.reload(); }, 1000);
 });
 
