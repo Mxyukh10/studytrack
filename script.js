@@ -44,6 +44,7 @@ function initDateBanner() {
    GREETING
 ============================================ */
 function initGreeting() {
+  if (!window.location.pathname.includes("dashboard")) return;
   const title = document.querySelector(".page-title");
   if (!title) return;
   const h = new Date().getHours();
