@@ -9,10 +9,7 @@
 <body>
 
 <div class="mobile-header">
-  <div class="logo-mark">
-    <div class="logo-icon">📚</div>
-    <div class="logo-text">Study<span>Track</span></div>
-  </div>
+  <img src="/logo.png" alt="StudyTrack" style="height:36px;width:auto;"/>
   <button class="hamburger" id="hamburger" aria-label="Open menu">☰</button>
 </div>
 
@@ -110,15 +107,11 @@ function updateSidebarAuth() {
   if(user&&!user.is_anonymous){
     const name=user.user_metadata?.full_name||user.user_metadata?.name||user.email||'User'
     const avatar=user.user_metadata?.avatar_url
-    nameEl.textContent=name.split(' ')[0]; labelEl.textContent='signed in with Google'
-    if(avatar){avatarEl.innerHTML=`<img src="${avatar}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;"/>`}
-    else{avatarEl.textContent=name.charAt(0).toUpperCase()}
-    btnEl.textContent='Sign out'; btnEl.href='#'
+    nameEl.textContent=name.split(' ')[0];labelEl.textContent='signed in with Google'
+    if(avatar){avatarEl.innerHTML=`<img src="${avatar}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;"/>`}else{avatarEl.textContent=name.charAt(0).toUpperCase()}
+    btnEl.textContent='Sign out';btnEl.href='#'
     btnEl.addEventListener('click',async(e)=>{e.preventDefault();await supabase.auth.signOut();window.location.href='/login.html'})
-  } else if(user&&user.is_anonymous){
-    nameEl.textContent='Guest'; labelEl.textContent='anonymous session'
-    btnEl.textContent='Sign in'; btnEl.href='/login.html'
-  }
+  } else if(user&&user.is_anonymous){nameEl.textContent='Guest';labelEl.textContent='anonymous session';btnEl.textContent='Sign in';btnEl.href='/login.html'}
 }
 
 fetch("/components/sidebar.html").then(r=>r.text()).then(data=>{
