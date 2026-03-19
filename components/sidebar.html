@@ -64,35 +64,3 @@ Timer
 </div>
 
 </aside>
-
-<script type="module">
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
-const supabase = createClient(
-  'https://dvsvomzikboccrqmsnpj.supabase.co',
-  'sb_publishable_J1wtt_ykvjyMShnrLXgZUQ_he7cIo0E'
-)
-const { data: { user } } = await supabase.auth.getUser()
-if (user && !user.is_anonymous) {
-  const name = user.user_metadata?.full_name || user.user_metadata?.name || user.email || 'User'
-  const avatar = user.user_metadata?.avatar_url
-  document.getElementById('sidebarName').textContent = name.split(' ')[0]
-  document.getElementById('sidebarAuthLabel').textContent = 'signed in with Google'
-  if (avatar) {
-    document.getElementById('sidebarAvatar').innerHTML = `<img src="${avatar}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;"/>`
-  } else {
-    document.getElementById('sidebarAvatar').textContent = name.charAt(0).toUpperCase()
-  }
-  const btn = document.getElementById('sidebarAuthBtn')
-  btn.textContent = 'Sign out'
-  btn.href = '#'
-  btn.addEventListener('click', async (e) => {
-    e.preventDefault()
-    await supabase.auth.signOut()
-    window.location.href = '/login.html'
-  })
-} else if (user && user.is_anonymous) {
-  document.getElementById('sidebarName').textContent = 'Guest'
-  document.getElementById('sidebarAuthLabel').textContent = 'anonymous session'
-  document.getElementById('sidebarAuthBtn').textContent = 'Sign in'
-}
-</script>
