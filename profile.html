@@ -112,7 +112,10 @@
     <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:16px;">This will permanently delete all your study sessions and profile data.</p>
     <button class="btn btn-danger" id="resetDataBtn">Reset All Data</button>
   </div>
-  <div class="storage-notice" style="margin-top:16px;"><span>🔒</span><span>Data is stored locally on this device only.</span></div>
+  <div class="storage-notice" style="margin-top:16px;">
+    <span>☁️</span>
+    <span>Your data is securely synced to the cloud.</span>
+  </div>
 </div>
 
 </div>
@@ -121,106 +124,116 @@
 
 <div class="toast" id="toast"><span id="toastMsg">Saved</span></div>
 
-<!-- NOTE: NO script.js here — fully standalone -->
-<script>
-const USER_KEY = "studytrack_user";
-const SESSION_KEY = "studytrack_sessions";
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
-// Streak
-function getStreak(){
-  try{
-    const sessions=JSON.parse(localStorage.getItem(SESSION_KEY)||"[]");
-    if(!sessions.length) return 0;
-    const dates=[...new Set(sessions.map(s=>s.date))].sort((a,b)=>new Date(b)-new Date(a));
-    let streak=0,current=new Date(); current.setHours(0,0,0,0);
-    for(let d of dates){
-      const sd=new Date(d); sd.setHours(0,0,0,0);
-      const diff=(current-sd)/86400000;
-      if(diff===0){streak++;current.setDate(current.getDate()-1);}
-      else if(diff===1&&streak===0){streak++;current.setDate(current.getDate()-2);}
-      else break;
-    }
-    return streak;
-  }catch{return 0;}
+const SUPABASE_URL     = 'https://dvsvomzikboccrqmsnpj.supabase.co'
+const SUPABASE_ANON_KEY = 'sb_publishable_J1wtt_ykvjyMShnrLXgZUQ_he7cIo0E'
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+async function ensureUser() {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) await supabase.auth.signInAnonymously()
+  const { data: { user } } = await supabase.auth.getUser()
+  return user
 }
-document.getElementById("sidebarStreak").textContent = getStreak()+" days";
 
-// Mobile sidebar
-const hb=document.getElementById("hamburger"),sb=document.getElementById("sidebar"),ov=document.getElementById("sidebarOverlay");
-if(hb&&sb){
-  hb.addEventListener("click",()=>{sb.classList.toggle("open");ov.classList.toggle("open");});
-  ov.addEventListener("click",()=>{sb.classList.remove("open");ov.classList.remove("open");});
+function toast(msg) {
+  const t=document.getElementById('toast'), tx=document.getElementById('toastMsg')
+  tx.textContent=msg; t.classList.add('show')
+  setTimeout(()=>t.classList.remove('show'), 2500)
+}
+
+function updateSummary() {
+  document.getElementById('summaryName').textContent      = document.getElementById('profileName').value || '—'
+  document.getElementById('summaryAge').textContent       = document.getElementById('profileAge').value || '—'
+  document.getElementById('summarySchool').textContent    = document.getElementById('profileSchool').value || '—'
+  const dg = document.getElementById('profileDailyGoal').value
+  const wg = document.getElementById('profileWeeklyGoal').value
+  document.getElementById('summaryDailyGoal').textContent  = dg ? dg+' min' : '—'
+  document.getElementById('summaryWeeklyGoal').textContent = wg ? wg+' hrs' : '—'
 }
 
 // Date banner
-document.getElementById("dateBannerText").textContent = new Date().toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric",year:"numeric"});
+document.getElementById('dateBannerText').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})
 
-// Toast
-function toast(msg){
-  const t=document.getElementById("toast"),tx=document.getElementById("toastMsg");
-  tx.textContent=msg; t.classList.add("show");
-  setTimeout(()=>t.classList.remove("show"),2500);
+// Mobile sidebar
+const hb=document.getElementById('hamburger'), sb=document.getElementById('sidebar'), ov=document.getElementById('sidebarOverlay')
+if(hb&&sb){
+  hb.addEventListener('click',()=>{sb.classList.toggle('open');ov.classList.toggle('open')})
+  ov.addEventListener('click',()=>{sb.classList.remove('open');ov.classList.remove('open')})
 }
 
-// Summary update
-function updateSummary(){
-  document.getElementById("summaryName").textContent = document.getElementById("profileName").value||"—";
-  document.getElementById("summaryAge").textContent = document.getElementById("profileAge").value||"—";
-  document.getElementById("summarySchool").textContent = document.getElementById("profileSchool").value||"—";
-  const dg=document.getElementById("profileDailyGoal").value;
-  const wg=document.getElementById("profileWeeklyGoal").value;
-  document.getElementById("summaryDailyGoal").textContent = dg ? dg+" min" : "—";
-  document.getElementById("summaryWeeklyGoal").textContent = wg ? wg+" hrs" : "—";
+// Live summary update as user types
+;['profileName','profileAge','profileSchool','profileDailyGoal','profileWeeklyGoal'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', updateSummary)
+})
+
+// Boot — load user + profile + streak
+const authUser = await ensureUser()
+
+// Streak
+const { data: sessData } = await supabase.from('sessions').select('date').eq('user_id', authUser.id)
+const sessions = sessData || []
+function getStreak() {
+  if (!sessions.length) return 0
+  const dates = [...new Set(sessions.map(s=>s.date))].sort((a,b)=>new Date(b)-new Date(a))
+  let streak=0, current=new Date(); current.setHours(0,0,0,0)
+  for (let d of dates) {
+    const sd=new Date(d); sd.setHours(0,0,0,0)
+    const diff=(current-sd)/86400000
+    if(diff===0){streak++;current.setDate(current.getDate()-1)}
+    else if(diff===1&&streak===0){streak++;current.setDate(current.getDate()-2)}
+    else break
+  }
+  return streak
 }
+document.getElementById('sidebarStreak').textContent = getStreak()+' days'
 
-// Load saved profile
-function loadProfile(){
-  try{
-    const u=JSON.parse(localStorage.getItem(USER_KEY)||"{}");
-    document.getElementById("profileName").value = u.name||"";
-    document.getElementById("profileAge").value = u.age||"";
-    document.getElementById("profileSchool").value = u.school||"";
-    document.getElementById("profileDailyGoal").value = u.dailyGoal||"";
-    document.getElementById("profileWeeklyGoal").value = u.weeklyGoal||"";
-  }catch{}
-  updateSummary();
+// Load profile from Supabase
+const { data: profile } = await supabase
+  .from('profiles').select('*').eq('id', authUser.id).single()
+if (profile) {
+  document.getElementById('profileName').value       = profile.name || ''
+  document.getElementById('profileAge').value        = profile.age || ''
+  document.getElementById('profileSchool').value     = profile.school || ''
+  document.getElementById('profileDailyGoal').value  = profile.daily_goal_minutes || ''
+  document.getElementById('profileWeeklyGoal').value = profile.weekly_goal_hours || ''
 }
+updateSummary()
 
-// Live update summary as user types
-["profileName","profileAge","profileSchool","profileDailyGoal","profileWeeklyGoal"].forEach(id=>{
-  document.getElementById(id).addEventListener("input", updateSummary);
-});
-
-// Save
-document.getElementById("saveProfileBtn").addEventListener("click", ()=>{
-  const u={
-    name: document.getElementById("profileName").value.trim(),
-    age: document.getElementById("profileAge").value.trim(),
-    school: document.getElementById("profileSchool").value.trim(),
-    dailyGoal: Number(document.getElementById("profileDailyGoal").value)||0,
-    weeklyGoal: Number(document.getElementById("profileWeeklyGoal").value)||0
-  };
-  localStorage.setItem(USER_KEY, JSON.stringify(u));
-  updateSummary();
-  toast("Profile saved ✓");
-});
+// Save profile
+document.getElementById('saveProfileBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('saveProfileBtn')
+  btn.textContent = 'Saving…'; btn.disabled = true
+  const { error } = await supabase.from('profiles').upsert({
+    id:                 authUser.id,
+    name:               document.getElementById('profileName').value.trim(),
+    age:                Number(document.getElementById('profileAge').value) || null,
+    school:             document.getElementById('profileSchool').value.trim(),
+    daily_goal_minutes: Number(document.getElementById('profileDailyGoal').value) || 0,
+    weekly_goal_hours:  Number(document.getElementById('profileWeeklyGoal').value) || 0
+  })
+  btn.textContent = 'Save Profile'; btn.disabled = false
+  if (error) { toast('Error saving profile'); console.error(error); return }
+  updateSummary()
+  toast('Profile saved ✓')
+})
 
 // Reset
-document.getElementById("resetDataBtn").addEventListener("click",()=>{
-  document.getElementById("confirmOverlay").classList.add("open");
-});
-document.getElementById("confirmCancel").addEventListener("click",()=>{
-  document.getElementById("confirmOverlay").classList.remove("open");
-});
-document.getElementById("confirmOk").addEventListener("click",()=>{
-  localStorage.removeItem(SESSION_KEY);
-  localStorage.removeItem(USER_KEY);
-  document.getElementById("confirmOverlay").classList.remove("open");
-  toast("All data cleared!");
-  setTimeout(()=>location.reload(), 1000);
-});
-
-loadProfile();
+document.getElementById('resetDataBtn').addEventListener('click', () => {
+  document.getElementById('confirmOverlay').classList.add('open')
+})
+document.getElementById('confirmCancel').addEventListener('click', () => {
+  document.getElementById('confirmOverlay').classList.remove('open')
+})
+document.getElementById('confirmOk').addEventListener('click', async () => {
+  await supabase.from('sessions').delete().eq('user_id', authUser.id)
+  await supabase.from('profiles').delete().eq('id', authUser.id)
+  document.getElementById('confirmOverlay').classList.remove('open')
+  toast('All data deleted!')
+  setTimeout(() => location.reload(), 1000)
+})
 </script>
 </body>
 </html>
