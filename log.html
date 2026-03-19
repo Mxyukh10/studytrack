@@ -114,11 +114,10 @@
 
 <div class="toast" id="toast"><span id="toastMsg">Session saved!</span></div>
 
-<script src="/script.js"></script>
-<script>
+<script type="module" src="/script.js"></script>
+<script type="module">
 fetch("/components/sidebar.html").then(r=>r.text()).then(data=>{
   document.getElementById("sidebar-container").innerHTML=data;
-  updateStreakBadge();
   document.querySelectorAll(".sidebar .nav-item").forEach(l=>{
     if(window.location.pathname.includes(l.getAttribute("href"))) l.classList.add("active");
   });
