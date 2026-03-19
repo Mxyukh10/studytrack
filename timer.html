@@ -66,11 +66,10 @@
 
 <div class="toast" id="toast"><span id="toastMsg"></span></div>
 
-<script src="/script.js"></script>
-<script>
+<script type="module" src="/script.js"></script>
+<script type="module">
 fetch("/components/sidebar.html").then(r=>r.text()).then(data=>{
   document.getElementById("sidebar-container").innerHTML=data;
-  updateStreakBadge();
   document.querySelectorAll(".sidebar .nav-item").forEach(l=>{
     if(window.location.pathname.includes(l.getAttribute("href"))) l.classList.add("active");
   });
@@ -88,7 +87,7 @@ const subjectEl=document.getElementById("timerSubject");
 function pad(n){return String(n).padStart(2,"0");}
 function updateDisplay(){const h=Math.floor(seconds/3600),m=Math.floor((seconds%3600)/60),s=seconds%60;display.textContent=`${pad(h)}:${pad(m)}:${pad(s)}`;}
 function showToast(msg){const t=document.getElementById("toast"),tx=document.getElementById("toastMsg");if(!t)return;tx.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2500);}
-function startTimer(){
+window.startTimer=function(){
   if(running)return;
   const subj=subjectEl.value.trim();
   if(!subj){subjectEl.classList.add("invalid");subjectEl.focus();setTimeout(()=>subjectEl.classList.remove("invalid"),600);showToast("Enter a subject first!");return;}
@@ -99,7 +98,7 @@ function startTimer(){
   btnStart.disabled=true;btnStart.style.opacity=".4";btnPause.classList.remove("active");
   startWaveform();
 }
-function pauseTimer(){
+window.pauseTimer=function(){
   if(!running&&!paused)return;
   if(running){
     running=false;paused=true;clearInterval(timerInterval);
@@ -115,7 +114,7 @@ function pauseTimer(){
     resumeWaveform();
   }
 }
-function stopTimer(){
+window.stopTimer=function(){
   if(!running&&!paused&&seconds===0)return;
   const subj=subjectEl.value.trim();
   if(!subj){subjectEl.classList.add("invalid");subjectEl.focus();setTimeout(()=>subjectEl.classList.remove("invalid"),600);showToast("Enter a subject first!");return;}
