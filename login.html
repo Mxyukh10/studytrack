@@ -6,71 +6,29 @@
 <title>Sign In — StudyTrack</title>
 <link rel="stylesheet" href="/style.css"/>
 <style>
-html, body {
-  min-height: 100vh;
-  background: #0e1012 !important;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: 'DM Sans', 'Inter', sans-serif;
-  margin: 0;
-  padding: 20px;
-  box-sizing: border-box;
-}
-.login-bg {position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;}
-.login-bg-blob {position:absolute;border-radius:50%;filter:blur(80px);opacity:.15;}
-.blob1 {width:500px;height:500px;background:#b5f23d;top:-120px;left:-100px;}
-.blob2 {width:400px;height:400px;background:#4dd9e8;bottom:-100px;right:-80px;}
-.blob3 {width:300px;height:300px;background:#a78bfa;top:40%;left:40%;}
-.login-card {
-  position: relative;
-  z-index: 1;
-  background: #1a1d21;
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 24px;
-  padding: 48px 44px 40px;
-  width: 100%;
-  max-width: 440px;
-  box-shadow: 0 32px 80px rgba(0,0,0,.5);
-}
-.login-logo {display:flex;align-items:center;gap:12px;margin-bottom:32px;}
-.login-logo-icon {font-size:2rem;line-height:1;}
-.login-logo-text {font-size:1.6rem;font-weight:800;color:#fff;}
-.login-logo-text span {color:#b5f23d;}
-.login-tagline {font-size:.72rem;color:rgba(255,255,255,.35);margin-top:2px;}
-.login-title {font-size:1.6rem;font-weight:800;color:#fff;margin-bottom:8px;line-height:1.2;}
-.login-title span {color:#b5f23d;}
-.login-subtitle {font-size:.88rem;color:rgba(255,255,255,.45);margin-bottom:28px;line-height:1.6;}
-.features {display:flex;flex-direction:column;gap:10px;margin-bottom:28px;}
-.feature-item {display:flex;align-items:center;gap:10px;font-size:.83rem;color:rgba(255,255,255,.45);}
-.feature-icon {font-size:1rem;flex-shrink:0;}
-.feature-text strong {color:rgba(255,255,255,.75);}
-.btn-google {
-  display:flex;align-items:center;justify-content:center;gap:12px;
-  width:100%;padding:14px 20px;
-  background:white;color:#1f1f1f;
-  border:none;border-radius:12px;
-  font-size:.95rem;font-weight:600;
-  cursor:pointer;transition:all .2s;
-  box-shadow:0 2px 8px rgba(0,0,0,.2);
-}
-.btn-google:hover {transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,0,0,.3);}
-.btn-google svg {width:20px;height:20px;flex-shrink:0;}
-.btn-anon {
-  display:flex;align-items:center;justify-content:center;gap:8px;
-  width:100%;padding:12px 20px;margin-top:10px;
-  background:transparent;color:rgba(255,255,255,.35);
-  border:1px solid rgba(255,255,255,.1);border-radius:12px;
-  font-size:.85rem;cursor:pointer;transition:all .2s;
-}
-.btn-anon:hover {border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.6);}
-.status-msg {text-align:center;font-size:.83rem;color:#b5f23d;margin-top:14px;min-height:20px;}
-.login-footer {
-  margin-top:24px;padding-top:18px;
-  border-top:1px solid rgba(255,255,255,.07);
-  text-align:center;font-size:.75rem;color:rgba(255,255,255,.25);
-}
-.login-footer a {color:#b5f23d;text-decoration:none;}
+html, body{min-height:100vh;background:#0e1012 !important;display:flex;align-items:center;justify-content:center;font-family:'DM Sans','Inter',sans-serif;margin:0;padding:20px;box-sizing:border-box;}
+.login-bg{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;}
+.login-bg-blob{position:absolute;border-radius:50%;filter:blur(80px);opacity:.15;}
+.blob1{width:500px;height:500px;background:#b5f23d;top:-120px;left:-100px;}
+.blob2{width:400px;height:400px;background:#4dd9e8;bottom:-100px;right:-80px;}
+.blob3{width:300px;height:300px;background:#a78bfa;top:40%;left:40%;}
+.login-card{position:relative;z-index:1;background:#1a1d21;border:1px solid rgba(255,255,255,0.08);border-radius:24px;padding:48px 44px 40px;width:100%;max-width:440px;box-shadow:0 32px 80px rgba(0,0,0,.5);}
+.login-logo{display:flex;align-items:center;margin-bottom:32px;}
+.login-title{font-size:1.6rem;font-weight:800;color:#fff;margin-bottom:8px;line-height:1.2;}
+.login-title span{color:#b5f23d;}
+.login-subtitle{font-size:.88rem;color:rgba(255,255,255,.45);margin-bottom:28px;line-height:1.6;}
+.features{display:flex;flex-direction:column;gap:10px;margin-bottom:28px;}
+.feature-item{display:flex;align-items:center;gap:10px;font-size:.83rem;color:rgba(255,255,255,.45);}
+.feature-icon{font-size:1rem;flex-shrink:0;}
+.feature-text strong{color:rgba(255,255,255,.75);}
+.btn-google{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;padding:14px 20px;background:white;color:#1f1f1f;border:none;border-radius:12px;font-size:.95rem;font-weight:600;cursor:pointer;transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,.2);}
+.btn-google:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,0,0,.3);}
+.btn-google svg{width:20px;height:20px;flex-shrink:0;}
+.btn-anon{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px 20px;margin-top:10px;background:transparent;color:rgba(255,255,255,.35);border:1px solid rgba(255,255,255,.1);border-radius:12px;font-size:.85rem;cursor:pointer;transition:all .2s;}
+.btn-anon:hover{border-color:rgba(255,255,255,.2);color:rgba(255,255,255,.6);}
+.status-msg{text-align:center;font-size:.83rem;color:#b5f23d;margin-top:14px;min-height:20px;}
+.login-footer{margin-top:24px;padding-top:18px;border-top:1px solid rgba(255,255,255,.07);text-align:center;font-size:.75rem;color:rgba(255,255,255,.25);}
+.login-footer a{color:#b5f23d;text-decoration:none;}
 </style>
 </head>
 <body>
@@ -83,11 +41,7 @@ html, body {
 
 <div class="login-card">
   <div class="login-logo">
-    <div class="login-logo-icon">📚</div>
-    <div>
-      <div class="login-logo-text">Study<span>Track</span></div>
-      <div class="login-tagline">// track · improve · repeat</div>
-    </div>
+    <img src="/logo.png" alt="StudyTrack" style="height:48px;width:auto;"/>
   </div>
 
   <h1 class="login-title">Track smarter,<br/><span>study better.</span></h1>
@@ -111,7 +65,6 @@ html, body {
   </button>
 
   <button class="btn-anon" id="btnAnon">Continue without signing in →</button>
-
   <div class="status-msg" id="statusMsg"></div>
 
   <div class="login-footer">
@@ -121,34 +74,12 @@ html, body {
 
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
-
-const supabase = createClient(
-  'https://dvsvomzikboccrqmsnpj.supabase.co',
-  'sb_publishable_J1wtt_ykvjyMShnrLXgZUQ_he7cIo0E'
-)
-
-const { data: { session } } = await supabase.auth.getSession()
-if (session?.user && !session.user.is_anonymous) {
-  window.location.replace('/dashboard.html')
-}
-
-const statusMsg = document.getElementById('statusMsg')
-
-document.getElementById('btnGoogle').addEventListener('click', async () => {
-  statusMsg.textContent = 'Redirecting to Google…'
-  const { error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: { redirectTo: 'https://studytrack-five.vercel.app/dashboard.html' }
-  })
-  if (error) { statusMsg.textContent = 'Something went wrong. Try again.'; console.error(error) }
-})
-
-document.getElementById('btnAnon').addEventListener('click', async () => {
-  statusMsg.textContent = 'Signing in…'
-  const { error } = await supabase.auth.signInAnonymously()
-  if (error) { statusMsg.textContent = 'Something went wrong. Try again.'; console.error(error); return }
-  window.location.replace('/dashboard.html')
-})
+const supabase = createClient('https://dvsvomzikboccrqmsnpj.supabase.co','sb_publishable_J1wtt_ykvjyMShnrLXgZUQ_he7cIo0E')
+const{data:{session}}=await supabase.auth.getSession()
+if(session?.user&&!session.user.is_anonymous){window.location.replace('/dashboard.html')}
+const statusMsg=document.getElementById('statusMsg')
+document.getElementById('btnGoogle').addEventListener('click',async()=>{statusMsg.textContent='Redirecting to Google…';const{error}=await supabase.auth.signInWithOAuth({provider:'google',options:{redirectTo:'https://studytrack-five.vercel.app/dashboard.html'}});if(error){statusMsg.textContent='Something went wrong. Try again.';console.error(error)}})
+document.getElementById('btnAnon').addEventListener('click',async()=>{statusMsg.textContent='Signing in…';const{error}=await supabase.auth.signInAnonymously();if(error){statusMsg.textContent='Something went wrong. Try again.';console.error(error);return}window.location.replace('/dashboard.html')})
 </script>
 </body>
 </html>
