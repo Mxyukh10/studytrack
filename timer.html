@@ -33,10 +33,7 @@
 <body>
 
 <div class="mobile-header">
-  <div class="logo-mark">
-    <div class="logo-icon">📚</div>
-    <div class="logo-text">Study<span>Track</span></div>
-  </div>
+  <img src="/logo.png" alt="StudyTrack" style="height:36px;width:auto;"/>
   <button class="hamburger" id="hamburger">☰</button>
 </div>
 
@@ -44,7 +41,6 @@
 
 <div class="app-shell">
 <div id="sidebar-container"></div>
-
 <main class="main-content timer-page">
   <h1 class="timer-title">Focus <span>Session</span></h1>
   <p class="timer-subtitle">Track a live study session and log it automatically.</p>
@@ -55,12 +51,10 @@
   <div id="timerDisplay" class="timer-display">00:00:00</div>
   <div class="timer-controls">
     <button class="btn btn-primary" id="btnStart" onclick="startTimer()">▶ Start</button>
-    <button class="btn btn-pause"   id="btnPause" onclick="pauseTimer()">⏸ Pause</button>
-    <button class="btn btn-danger"  id="btnStop"  onclick="stopTimer()">⏹ Stop</button>
+    <button class="btn btn-pause" id="btnPause" onclick="pauseTimer()">⏸ Pause</button>
+    <button class="btn btn-danger" id="btnStop" onclick="stopTimer()">⏹ Stop</button>
   </div>
-  <div class="waveform-wrap" id="waveformWrap">
-    <canvas id="waveformCanvas"></canvas>
-  </div>
+  <div class="waveform-wrap" id="waveformWrap"><canvas id="waveformCanvas"></canvas></div>
 </main>
 </div>
 
@@ -71,84 +65,21 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 const supabase = createClient('https://dvsvomzikboccrqmsnpj.supabase.co','sb_publishable_J1wtt_ykvjyMShnrLXgZUQ_he7cIo0E')
 const { data: { user } } = await supabase.auth.getUser()
-
-function updateSidebarAuth() {
-  const nameEl=document.getElementById('sidebarName'),labelEl=document.getElementById('sidebarAuthLabel')
-  const avatarEl=document.getElementById('sidebarAvatar'),btnEl=document.getElementById('sidebarAuthBtn')
-  if(!nameEl)return
-  if(user&&!user.is_anonymous){
-    const name=user.user_metadata?.full_name||user.user_metadata?.name||user.email||'User'
-    const avatar=user.user_metadata?.avatar_url
-    nameEl.textContent=name.split(' ')[0];labelEl.textContent='signed in with Google'
-    if(avatar){avatarEl.innerHTML=`<img src="${avatar}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;"/>`}else{avatarEl.textContent=name.charAt(0).toUpperCase()}
-    btnEl.textContent='Sign out';btnEl.href='#'
-    btnEl.addEventListener('click',async(e)=>{e.preventDefault();await supabase.auth.signOut();window.location.href='/login.html'})
-  } else if(user&&user.is_anonymous){nameEl.textContent='Guest';labelEl.textContent='anonymous session';btnEl.textContent='Sign in';btnEl.href='/login.html'}
-}
-
-fetch("/components/sidebar.html").then(r=>r.text()).then(data=>{
-  document.getElementById("sidebar-container").innerHTML=data
-  updateSidebarAuth()
-  document.querySelectorAll(".sidebar .nav-item").forEach(l=>{if(window.location.pathname.includes(l.getAttribute("href")))l.classList.add("active")})
-  const hb=document.getElementById("hamburger"),sb=document.getElementById("sidebar"),ov=document.getElementById("sidebarOverlay")
-  if(hb&&sb){hb.addEventListener("click",()=>{sb.classList.toggle("open");ov.classList.toggle("open")});ov.addEventListener("click",()=>{sb.classList.remove("open");ov.classList.remove("open")})}
-})
-
+function updateSidebarAuth(){const nameEl=document.getElementById('sidebarName'),labelEl=document.getElementById('sidebarAuthLabel'),avatarEl=document.getElementById('sidebarAvatar'),btnEl=document.getElementById('sidebarAuthBtn');if(!nameEl)return;if(user&&!user.is_anonymous){const name=user.user_metadata?.full_name||user.user_metadata?.name||user.email||'User';const avatar=user.user_metadata?.avatar_url;nameEl.textContent=name.split(' ')[0];labelEl.textContent='signed in with Google';if(avatar){avatarEl.innerHTML=`<img src="${avatar}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;"/>`}else{avatarEl.textContent=name.charAt(0).toUpperCase()};btnEl.textContent='Sign out';btnEl.href='#';btnEl.addEventListener('click',async(e)=>{e.preventDefault();await supabase.auth.signOut();window.location.href='/login.html'})}else if(user&&user.is_anonymous){nameEl.textContent='Guest';labelEl.textContent='anonymous session';btnEl.textContent='Sign in';btnEl.href='/login.html'}}
+fetch("/components/sidebar.html").then(r=>r.text()).then(data=>{document.getElementById("sidebar-container").innerHTML=data;updateSidebarAuth();document.querySelectorAll(".sidebar .nav-item").forEach(l=>{if(window.location.pathname.includes(l.getAttribute("href")))l.classList.add("active")});const hb=document.getElementById("hamburger"),sb=document.getElementById("sidebar"),ov=document.getElementById("sidebarOverlay");if(hb&&sb){hb.addEventListener("click",()=>{sb.classList.toggle("open");ov.classList.toggle("open")});ov.addEventListener("click",()=>{sb.classList.remove("open");ov.classList.remove("open")})}})
 let timerInterval=null,seconds=0,running=false,paused=false
-const display=document.getElementById("timerDisplay"),statusEl=document.getElementById("timerStatus")
-const btnStart=document.getElementById("btnStart"),btnPause=document.getElementById("btnPause")
-const subjectEl=document.getElementById("timerSubject")
+const display=document.getElementById("timerDisplay"),statusEl=document.getElementById("timerStatus"),btnStart=document.getElementById("btnStart"),btnPause=document.getElementById("btnPause"),subjectEl=document.getElementById("timerSubject")
 function pad(n){return String(n).padStart(2,"0")}
 function updateDisplay(){const h=Math.floor(seconds/3600),m=Math.floor((seconds%3600)/60),s=seconds%60;display.textContent=`${pad(h)}:${pad(m)}:${pad(s)}`}
 function showToast(msg){const t=document.getElementById("toast"),tx=document.getElementById("toastMsg");if(!t)return;tx.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2500)}
-window.startTimer=function(){
-  if(running)return
-  const subj=subjectEl.value.trim()
-  if(!subj){subjectEl.classList.add("invalid");subjectEl.focus();setTimeout(()=>subjectEl.classList.remove("invalid"),600);showToast("Enter a subject first!");return}
-  running=true;paused=false;subjectEl.disabled=true
-  timerInterval=setInterval(()=>{seconds++;updateDisplay()},1000)
-  display.classList.add("running");display.classList.remove("paused")
-  statusEl.textContent="● recording";statusEl.className="timer-status running"
-  btnStart.disabled=true;btnStart.style.opacity=".4";btnPause.classList.remove("active")
-  startWaveform()
-}
-window.pauseTimer=function(){
-  if(!running&&!paused)return
-  if(running){
-    running=false;paused=true;clearInterval(timerInterval)
-    display.classList.remove("running");display.classList.add("paused")
-    statusEl.textContent="⏸ paused";statusEl.className="timer-status paused"
-    btnPause.textContent="▶ Resume";btnPause.classList.add("active")
-    pauseWaveform()
-  } else {
-    running=true;paused=false;timerInterval=setInterval(()=>{seconds++;updateDisplay()},1000)
-    display.classList.add("running");display.classList.remove("paused")
-    statusEl.textContent="● recording";statusEl.className="timer-status running"
-    btnPause.textContent="⏸ Pause";btnPause.classList.remove("active")
-    resumeWaveform()
-  }
-}
-window.stopTimer=function(){
-  if(!running&&!paused&&seconds===0)return
-  const subj=subjectEl.value.trim()
-  if(!subj){subjectEl.classList.add("invalid");subjectEl.focus();setTimeout(()=>subjectEl.classList.remove("invalid"),600);showToast("Enter a subject first!");return}
-  clearInterval(timerInterval);running=false;paused=false;stopWaveform()
-  let minutes=Math.round(seconds/60)
-  if(minutes===0&&seconds>0)minutes=1
-  if(minutes===0){showToast("Start the timer first!");return}
-  showToast(`Logged ${minutes} min — redirecting…`)
-  setTimeout(()=>{window.location.href="/log.html?subject="+encodeURIComponent(subj)+"&duration="+minutes},900)
-}
+window.startTimer=function(){if(running)return;const subj=subjectEl.value.trim();if(!subj){subjectEl.classList.add("invalid");subjectEl.focus();setTimeout(()=>subjectEl.classList.remove("invalid"),600);showToast("Enter a subject first!");return}running=true;paused=false;subjectEl.disabled=true;timerInterval=setInterval(()=>{seconds++;updateDisplay()},1000);display.classList.add("running");display.classList.remove("paused");statusEl.textContent="● recording";statusEl.className="timer-status running";btnStart.disabled=true;btnStart.style.opacity=".4";btnPause.classList.remove("active");startWaveform()}
+window.pauseTimer=function(){if(!running&&!paused)return;if(running){running=false;paused=true;clearInterval(timerInterval);display.classList.remove("running");display.classList.add("paused");statusEl.textContent="⏸ paused";statusEl.className="timer-status paused";btnPause.textContent="▶ Resume";btnPause.classList.add("active");pauseWaveform()}else{running=true;paused=false;timerInterval=setInterval(()=>{seconds++;updateDisplay()},1000);display.classList.add("running");display.classList.remove("paused");statusEl.textContent="● recording";statusEl.className="timer-status running";btnPause.textContent="⏸ Pause";btnPause.classList.remove("active");resumeWaveform()}}
+window.stopTimer=function(){if(!running&&!paused&&seconds===0)return;const subj=subjectEl.value.trim();if(!subj){subjectEl.classList.add("invalid");subjectEl.focus();setTimeout(()=>subjectEl.classList.remove("invalid"),600);showToast("Enter a subject first!");return}clearInterval(timerInterval);running=false;paused=false;stopWaveform();let minutes=Math.round(seconds/60);if(minutes===0&&seconds>0)minutes=1;if(minutes===0){showToast("Start the timer first!");return}showToast(`Logged ${minutes} min — redirecting…`);setTimeout(()=>{window.location.href="/log.html?subject="+encodeURIComponent(subj)+"&duration="+minutes},900)}
 const canvas=document.getElementById("waveformCanvas"),ctx=canvas.getContext("2d"),wrap=document.getElementById("waveformWrap")
 let waveRAF=null,waveActive=false,wavePhase=0
 const WAVES=[{freq:.018,amp:.55,speed:.048,color:"rgba(77,217,232,0.75)",width:2.5},{freq:.026,amp:.32,speed:.076,color:"rgba(77,217,232,0.4)",width:1.5},{freq:.012,amp:.22,speed:.028,color:"rgba(77,217,232,0.2)",width:1}]
 function resizeCanvas(){canvas.width=wrap.offsetWidth*(window.devicePixelRatio||1);canvas.height=wrap.offsetHeight*(window.devicePixelRatio||1)}
-function drawWave(){
-  resizeCanvas();const dpr=window.devicePixelRatio||1;ctx.clearRect(0,0,canvas.width,canvas.height)
-  const cx=canvas.width/dpr,cy=canvas.height/dpr/2
-  WAVES.forEach((w,i)=>{const phase=wavePhase*w.speed+i*1.3;ctx.save();ctx.scale(dpr,dpr);ctx.beginPath();ctx.strokeStyle=w.color;ctx.lineWidth=w.width;ctx.shadowColor="rgba(77,217,232,.45)";ctx.shadowBlur=10;for(let x=0;x<=cx;x+=2){const y=cy+Math.sin(x*w.freq+phase)*(cy*w.amp);x===0?ctx.moveTo(x,y):ctx.lineTo(x,y)}ctx.stroke();ctx.restore()})
-  if(waveActive){wavePhase++;waveRAF=requestAnimationFrame(drawWave)}
-}
+function drawWave(){resizeCanvas();const dpr=window.devicePixelRatio||1;ctx.clearRect(0,0,canvas.width,canvas.height);const cx=canvas.width/dpr,cy=canvas.height/dpr/2;WAVES.forEach((w,i)=>{const phase=wavePhase*w.speed+i*1.3;ctx.save();ctx.scale(dpr,dpr);ctx.beginPath();ctx.strokeStyle=w.color;ctx.lineWidth=w.width;ctx.shadowColor="rgba(77,217,232,.45)";ctx.shadowBlur=10;for(let x=0;x<=cx;x+=2){const y=cy+Math.sin(x*w.freq+phase)*(cy*w.amp);x===0?ctx.moveTo(x,y):ctx.lineTo(x,y)}ctx.stroke();ctx.restore()});if(waveActive){wavePhase++;waveRAF=requestAnimationFrame(drawWave)}}
 function startWaveform(){wrap.classList.add("visible");waveActive=true;waveRAF=requestAnimationFrame(drawWave)}
 function pauseWaveform(){waveActive=false;cancelAnimationFrame(waveRAF);const dpr=window.devicePixelRatio||1;resizeCanvas();ctx.clearRect(0,0,canvas.width,canvas.height);const cx=canvas.width/dpr,cy=canvas.height/dpr/2;WAVES.forEach((w,i)=>{const phase=wavePhase*w.speed+i*1.3;ctx.save();ctx.scale(dpr,dpr);ctx.beginPath();ctx.strokeStyle=w.color.replace(/[\d.]+\)$/,"0.12)");ctx.lineWidth=w.width;for(let x=0;x<=cx;x+=2){const y=cy+Math.sin(x*w.freq+phase)*(cy*w.amp);x===0?ctx.moveTo(x,y):ctx.lineTo(x,y)}ctx.stroke();ctx.restore()})}
 function resumeWaveform(){waveActive=true;waveRAF=requestAnimationFrame(drawWave)}
