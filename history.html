@@ -127,95 +127,263 @@ th.sorted{color:var(--accent);}
 
 <div class="table-card">
   <div class="table-header"><span class="table-title">Sessions</span><span class="table-count" id="tableCount">0 results</span></div>
-  <div id="tableArea"></div>
+  <div id="tableArea"><div style="text-align:center;padding:40px;color:var(--text-muted)">Loading sessions…</div></div>
 </div>
 
 </main>
 </div>
 
-<script src="/script.js"></script>
-<script>
-fetch("/components/sidebar.html").then(r=>r.text()).then(data=>{
-  document.getElementById("sidebar-container").innerHTML=data;
-  updateStreakBadge();
-  document.querySelectorAll(".sidebar .nav-item").forEach(l=>{
-    if(window.location.pathname.includes(l.getAttribute("href"))) l.classList.add("active");
-  });
-  const hb=document.getElementById("hamburger"),sb=document.getElementById("sidebar"),ov=document.getElementById("sidebarOverlay");
-  if(hb&&sb){
-    hb.addEventListener("click",()=>{sb.classList.toggle("open");ov.classList.toggle("open");});
-    ov.addEventListener("click",()=>{sb.classList.remove("open");ov.classList.remove("open");});
-  }
-});
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
-const LS_KEY="studytrack_sessions";
-function loadSess(){try{return JSON.parse(localStorage.getItem(LS_KEY)||"[]");}catch{return[];}}
-function saveSess(a){localStorage.setItem(LS_KEY,JSON.stringify(a));}
-function fmtDur(m){if(!m)return"–";const h=Math.floor(m/60),r=m%60;return h?r?`${h}h ${r}m`:`${h}h`:`${r}m`;}
-function fmtDate(iso){if(!iso)return"–";const[y,mo,d]=iso.split("-");const M=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];return `${M[+mo-1]} ${+d}, ${y}`;}
-function esc(s){return String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
-function showToast(msg){const t=document.getElementById("toast"),tx=document.getElementById("toastMsg");if(!t)return;if(tx)tx.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2500);}
+const SUPABASE_URL = 'https://dvsvomzikboccrqmsnpj.supabase.co'
+const SUPABASE_ANON_KEY = 'sb_publishable_J1wtt_ykvjyMShnrLXgZUQ_he7cIo0E'
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
-document.getElementById("dateBannerText").textContent=new Date().toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric",year:"numeric"});
-
-let _sortKey="date",_sortDir=-1,_deleteIdx=null,_editIdx=null;
-
-function render(){
-  const all=loadSess();
-  const search=document.getElementById("filterSearch").value.trim().toLowerCase();
-  const diff=document.getElementById("filterDifficulty").value;
-  const from=document.getElementById("filterDateFrom").value;
-  const to=document.getElementById("filterDateTo").value;
-  const totalMins=all.reduce((s,x)=>s+(+x.duration||0),0);
-  const totalQ=all.reduce((s,x)=>s+(+x.questions||0),0);
-  document.getElementById("statSessions").textContent=all.length;
-  document.getElementById("statHours").textContent=(totalMins/60).toFixed(1);
-  document.getElementById("statQuestions").textContent=totalQ;
-  document.getElementById("heroSub").textContent=all.length===0?"No sessions logged yet":`${all.length} session${all.length!==1?"s":""} logged`;
-  const subjectMap={};
-  all.forEach(s=>{const k=s.subject||"?";subjectMap[k]=(subjectMap[k]||0)+s.duration;});
-  const topSubj=Object.entries(subjectMap).sort((a,b)=>b[1]-a[1])[0];
-  document.getElementById("statBestSubject").textContent=topSubj?topSubj[0]:"—";
-  let filtered=all.map((s,i)=>({...s,_idx:i})).filter(s=>{
-    if(search&&!(s.subject??"").toLowerCase().includes(search)) return false;
-    if(diff&&s.difficulty!==diff) return false;
-    if(from&&s.date<from) return false;
-    if(to&&s.date>to) return false;
-    return true;
-  });
-  filtered.sort((a,b)=>{
-    let va=a[_sortKey]??"",vb=b[_sortKey]??"";
-    if(_sortKey==="duration"||_sortKey==="questions"){va=Number(va);vb=Number(vb);}
-    else{va=String(va).toLowerCase();vb=String(vb).toLowerCase();}
-    return va<vb?-_sortDir:va>vb?_sortDir:0;
-  });
-  document.getElementById("tableCount").textContent=`${filtered.length} result${filtered.length!==1?"s":""}`;
-  const area=document.getElementById("tableArea");
-  if(filtered.length===0){
-    const noData=all.length===0;
-    area.innerHTML=`<div class="empty-state"><div class="empty-icon">${noData?"📚":"🔍"}</div><p class="empty-title">${noData?"No sessions yet":"No matches found"}</p><p class="empty-sub">${noData?"Start logging sessions to see history here.":"Try adjusting your filters."}</p>${noData?`<a href="/log.html" class="btn btn-primary btn-sm" style="margin-top:.75rem">Log your first session</a>`:""}</div>`;
-    return;
-  }
-  const arrow=k=>_sortKey===k?`<span class="sort-arrow">${_sortDir===-1?"↓":"↑"}</span>`:`<span class="sort-arrow">↕</span>`;
-  const sc=k=>_sortKey===k?"sorted":"";
-  const rows=filtered.map(s=>`<tr><td class="td-date">${esc(fmtDate(s.date))}</td><td class="td-subject">${esc(s.subject??"–")}</td><td class="td-duration">${esc(fmtDur(s.duration))}</td><td class="td-questions">${s.questions>0?esc(s.questions):"–"}</td><td><span class="diff-chip ${esc(s.difficulty??'')}">${esc(s.difficulty??"–")}</span></td><td class="td-notes" title="${esc(s.notes??'')}">${s.notes?esc(s.notes):`<span style="opacity:.3">—</span>`}</td><td><div class="action-cell"><button class="btn-edit" data-idx="${s._idx}">✏️</button><button class="btn-delete" data-idx="${s._idx}">🗑️</button></div></td></tr>`).join("");
-  area.innerHTML=`<div style="overflow-x:auto;"><table class="data-table"><thead><tr><th data-sort="date" class="${sc("date")}">Date${arrow("date")}</th><th data-sort="subject" class="${sc("subject")}">Subject${arrow("subject")}</th><th data-sort="duration" class="${sc("duration")}">Duration${arrow("duration")}</th><th data-sort="questions" class="${sc("questions")}">Questions${arrow("questions")}</th><th data-sort="difficulty" class="${sc("difficulty")}">Difficulty${arrow("difficulty")}</th><th>Notes</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`;
-  area.querySelectorAll("th[data-sort]").forEach(th=>{th.addEventListener("click",()=>{const k=th.dataset.sort;_sortKey===k?_sortDir*=-1:(_sortKey=k,_sortDir=-1);render();});});
-  area.querySelectorAll(".btn-delete").forEach(btn=>{btn.addEventListener("click",()=>{_deleteIdx=parseInt(btn.dataset.idx,10);document.getElementById("confirmOverlay").classList.add("open");});});
-  area.querySelectorAll(".btn-edit").forEach(btn=>{btn.addEventListener("click",()=>{_editIdx=parseInt(btn.dataset.idx,10);const s=loadSess()[_editIdx];if(!s)return;document.getElementById("editSubject").value=s.subject||"";document.getElementById("editDuration").value=s.duration||"";document.getElementById("editQuestions").value=s.questions||"";document.getElementById("editDate").value=s.date||"";document.getElementById("editDifficulty").value=s.difficulty||"Medium";document.getElementById("editNotes").value=s.notes||"";document.getElementById("editOverlay").classList.add("open");});});
+async function ensureUser() {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) await supabase.auth.signInAnonymously()
+  const { data: { user } } = await supabase.auth.getUser()
+  return user
 }
 
-document.getElementById("confirmCancel").addEventListener("click",()=>{document.getElementById("confirmOverlay").classList.remove("open");_deleteIdx=null;});
-document.getElementById("confirmOk").addEventListener("click",()=>{if(_deleteIdx===null)return;const s=loadSess();s.splice(_deleteIdx,1);saveSess(s);document.getElementById("confirmOverlay").classList.remove("open");_deleteIdx=null;render();showToast("Session deleted");});
-document.getElementById("confirmOverlay").addEventListener("click",e=>{if(e.target===document.getElementById("confirmOverlay")){document.getElementById("confirmOverlay").classList.remove("open");_deleteIdx=null;}});
-document.getElementById("editSaveBtn").addEventListener("click",()=>{if(_editIdx===null)return;const subj=document.getElementById("editSubject").value.trim();const dur=parseInt(document.getElementById("editDuration").value);if(!subj||!dur){showToast("Subject and duration required");return;}const s=loadSess();s[_editIdx]={...s[_editIdx],subject:subj,duration:dur,questions:parseInt(document.getElementById("editQuestions").value)||0,date:document.getElementById("editDate").value||s[_editIdx].date,difficulty:document.getElementById("editDifficulty").value,notes:document.getElementById("editNotes").value.trim()};saveSess(s);document.getElementById("editOverlay").classList.remove("open");_editIdx=null;render();showToast("Session updated ✓");});
-document.getElementById("editCancelBtn").addEventListener("click",()=>{document.getElementById("editOverlay").classList.remove("open");_editIdx=null;});
-document.getElementById("editOverlay").addEventListener("click",e=>{if(e.target===document.getElementById("editOverlay")){document.getElementById("editOverlay").classList.remove("open");_editIdx=null;}});
-["filterSearch","filterDifficulty","filterDateFrom","filterDateTo"].forEach(id=>{document.getElementById(id).addEventListener("input",render);document.getElementById(id).addEventListener("change",render);});
-document.getElementById("btnClearFilters").addEventListener("click",()=>{["filterSearch","filterDifficulty","filterDateFrom","filterDateTo"].forEach(id=>document.getElementById(id).value="");render();});
-document.getElementById("exportCSVBtn").addEventListener("click",()=>{const sessions=loadSess();if(!sessions.length){showToast("No sessions to export");return;}const headers=["Date","Subject","Duration (min)","Questions","Difficulty","Notes"];const rows=sessions.map(s=>[s.date||"",(s.subject||"").replace(/,/g,";"),s.duration||0,s.questions||0,s.difficulty||"",(s.notes||"").replace(/,/g,";").replace(/\n/g," ")]);const csv=[headers,...rows].map(r=>r.join(",")).join("\n");const blob=new Blob([csv],{type:"text/csv"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`studytrack_${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(a.href);showToast("CSV exported ✓");});
+async function loadSessions() {
+  const { data, error } = await supabase
+    .from('sessions').select('*').order('date', { ascending: false })
+  if (error) { console.error(error); return [] }
+  return (data || []).map(s => ({
+    ...s,
+    duration:   s.duration_minutes,
+    questions:  s.questions_solved,
+    difficulty: cap(s.difficulty)
+  }))
+}
 
-render();
+async function deleteSession(id) {
+  const { error } = await supabase.from('sessions').delete().eq('id', id)
+  if (error) console.error(error)
+}
+
+async function updateSession(id, updates) {
+  const { error } = await supabase.from('sessions').update({
+    subject:          updates.subject,
+    duration_minutes: updates.duration,
+    questions_solved: updates.questions,
+    date:             updates.date,
+    difficulty:       updates.difficulty.toLowerCase(),
+    notes:            updates.notes
+  }).eq('id', id)
+  if (error) console.error(error)
+}
+
+function cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : '' }
+function fmtDur(m) { if (!m) return '–'; const h = Math.floor(m/60), r = m%60; return h ? (r ? `${h}h ${r}m` : `${h}h`) : `${r}m` }
+function fmtDate(iso) { if (!iso) return '–'; const [y,mo,d] = iso.split('-'); const M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; return `${M[+mo-1]} ${+d}, ${y}` }
+function esc(s) { return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') }
+function showToast(msg) { const t=document.getElementById('toast'),tx=document.getElementById('toastMsg'); if(!t)return; if(tx)tx.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500) }
+
+document.getElementById('dateBannerText').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})
+
+let _sortKey='date', _sortDir=-1, _deleteId=null, _editId=null, _allSessions=[]
+
+function render() {
+  const sessions = _allSessions
+  const search = document.getElementById('filterSearch').value.trim().toLowerCase()
+  const diff   = document.getElementById('filterDifficulty').value
+  const from   = document.getElementById('filterDateFrom').value
+  const to     = document.getElementById('filterDateTo').value
+
+  const totalMins = sessions.reduce((s,x)=>s+(+x.duration||0),0)
+  const totalQ    = sessions.reduce((s,x)=>s+(+x.questions||0),0)
+  document.getElementById('statSessions').textContent  = sessions.length
+  document.getElementById('statHours').textContent     = (totalMins/60).toFixed(1)
+  document.getElementById('statQuestions').textContent = totalQ
+  document.getElementById('heroSub').textContent = sessions.length === 0
+    ? 'No sessions logged yet'
+    : `${sessions.length} session${sessions.length!==1?'s':''} logged`
+
+  const subjectMap = {}
+  sessions.forEach(s=>{ const k=s.subject||'?'; subjectMap[k]=(subjectMap[k]||0)+s.duration })
+  const topSubj = Object.entries(subjectMap).sort((a,b)=>b[1]-a[1])[0]
+  document.getElementById('statBestSubject').textContent = topSubj ? topSubj[0] : '—'
+
+  let filtered = sessions.filter(s => {
+    if (search && !(s.subject??'').toLowerCase().includes(search)) return false
+    if (diff && s.difficulty !== diff) return false
+    if (from && s.date < from) return false
+    if (to && s.date > to) return false
+    return true
+  })
+
+  filtered.sort((a,b) => {
+    let va=a[_sortKey]??'', vb=b[_sortKey]??''
+    if (_sortKey==='duration'||_sortKey==='questions') { va=Number(va); vb=Number(vb) }
+    else { va=String(va).toLowerCase(); vb=String(vb).toLowerCase() }
+    return va<vb?-_sortDir:va>vb?_sortDir:0
+  })
+
+  document.getElementById('tableCount').textContent = `${filtered.length} result${filtered.length!==1?'s':''}`
+  const area = document.getElementById('tableArea')
+
+  if (filtered.length === 0) {
+    const noData = sessions.length === 0
+    area.innerHTML = `<div class="empty-state"><div class="empty-icon">${noData?'📚':'🔍'}</div><p class="empty-title">${noData?'No sessions yet':'No matches found'}</p><p class="empty-sub">${noData?'Start logging sessions to see history here.':'Try adjusting your filters.'}</p>${noData?`<a href="/log.html" class="btn btn-primary btn-sm" style="margin-top:.75rem">Log your first session</a>`:''}</div>`
+    return
+  }
+
+  const arrow = k => _sortKey===k ? `<span class="sort-arrow">${_sortDir===-1?'↓':'↑'}</span>` : `<span class="sort-arrow">↕</span>`
+  const sc    = k => _sortKey===k ? 'sorted' : ''
+  const rows  = filtered.map(s => `<tr>
+    <td class="td-date">${esc(fmtDate(s.date))}</td>
+    <td class="td-subject">${esc(s.subject??'–')}</td>
+    <td class="td-duration">${esc(fmtDur(s.duration))}</td>
+    <td class="td-questions">${s.questions>0?esc(s.questions):'–'}</td>
+    <td><span class="diff-chip ${esc(s.difficulty??'')}">${esc(s.difficulty??'–')}</span></td>
+    <td class="td-notes" title="${esc(s.notes??'')}">${s.notes?esc(s.notes):'<span style="opacity:.3">—</span>'}</td>
+    <td><div class="action-cell">
+      <button class="btn-edit" data-id="${s.id}">✏️</button>
+      <button class="btn-delete" data-id="${s.id}">🗑️</button>
+    </div></td>
+  </tr>`).join('')
+
+  area.innerHTML = `<div style="overflow-x:auto;"><table class="data-table"><thead><tr>
+    <th data-sort="date" class="${sc('date')}">Date${arrow('date')}</th>
+    <th data-sort="subject" class="${sc('subject')}">Subject${arrow('subject')}</th>
+    <th data-sort="duration" class="${sc('duration')}">Duration${arrow('duration')}</th>
+    <th data-sort="questions" class="${sc('questions')}">Questions${arrow('questions')}</th>
+    <th data-sort="difficulty" class="${sc('difficulty')}">Difficulty${arrow('difficulty')}</th>
+    <th>Notes</th><th></th>
+  </tr></thead><tbody>${rows}</tbody></table></div>`
+
+  area.querySelectorAll('th[data-sort]').forEach(th => {
+    th.addEventListener('click', () => {
+      const k = th.dataset.sort
+      _sortKey===k ? _sortDir*=-1 : (_sortKey=k, _sortDir=-1)
+      render()
+    })
+  })
+  area.querySelectorAll('.btn-delete').forEach(btn => {
+    btn.addEventListener('click', () => {
+      _deleteId = btn.dataset.id
+      document.getElementById('confirmOverlay').classList.add('open')
+    })
+  })
+  area.querySelectorAll('.btn-edit').forEach(btn => {
+    btn.addEventListener('click', () => {
+      _editId = btn.dataset.id
+      const s = _allSessions.find(x => x.id === _editId)
+      if (!s) return
+      document.getElementById('editSubject').value   = s.subject||''
+      document.getElementById('editDuration').value  = s.duration||''
+      document.getElementById('editQuestions').value = s.questions||''
+      document.getElementById('editDate').value      = s.date||''
+      document.getElementById('editDifficulty').value= s.difficulty||'Medium'
+      document.getElementById('editNotes').value     = s.notes||''
+      document.getElementById('editOverlay').classList.add('open')
+    })
+  })
+}
+
+async function reload() {
+  _allSessions = await loadSessions()
+  render()
+}
+
+// Delete
+document.getElementById('confirmCancel').addEventListener('click', () => {
+  document.getElementById('confirmOverlay').classList.remove('open'); _deleteId=null
+})
+document.getElementById('confirmOk').addEventListener('click', async () => {
+  if (!_deleteId) return
+  await deleteSession(_deleteId)
+  document.getElementById('confirmOverlay').classList.remove('open')
+  _deleteId = null
+  showToast('Session deleted')
+  await reload()
+})
+document.getElementById('confirmOverlay').addEventListener('click', e => {
+  if (e.target===document.getElementById('confirmOverlay')) {
+    document.getElementById('confirmOverlay').classList.remove('open'); _deleteId=null
+  }
+})
+
+// Edit
+document.getElementById('editSaveBtn').addEventListener('click', async () => {
+  if (!_editId) return
+  const subj = document.getElementById('editSubject').value.trim()
+  const dur  = parseInt(document.getElementById('editDuration').value)
+  if (!subj || !dur) { showToast('Subject and duration required'); return }
+  document.getElementById('editSaveBtn').textContent = 'Saving…'
+  await updateSession(_editId, {
+    subject:    subj,
+    duration:   dur,
+    questions:  parseInt(document.getElementById('editQuestions').value)||0,
+    date:       document.getElementById('editDate').value,
+    difficulty: document.getElementById('editDifficulty').value,
+    notes:      document.getElementById('editNotes').value.trim()
+  })
+  document.getElementById('editOverlay').classList.remove('open')
+  document.getElementById('editSaveBtn').textContent = 'Save Changes'
+  _editId = null
+  showToast('Session updated ✓')
+  await reload()
+})
+document.getElementById('editCancelBtn').addEventListener('click', () => {
+  document.getElementById('editOverlay').classList.remove('open'); _editId=null
+})
+document.getElementById('editOverlay').addEventListener('click', e => {
+  if (e.target===document.getElementById('editOverlay')) {
+    document.getElementById('editOverlay').classList.remove('open'); _editId=null
+  }
+})
+
+// Filters
+;['filterSearch','filterDifficulty','filterDateFrom','filterDateTo'].forEach(id => {
+  document.getElementById(id).addEventListener('input', render)
+  document.getElementById(id).addEventListener('change', render)
+})
+document.getElementById('btnClearFilters').addEventListener('click', () => {
+  ;['filterSearch','filterDifficulty','filterDateFrom','filterDateTo'].forEach(id=>document.getElementById(id).value='')
+  render()
+})
+
+// Export CSV
+document.getElementById('exportCSVBtn').addEventListener('click', () => {
+  if (!_allSessions.length) { showToast('No sessions to export'); return }
+  const headers = ['Date','Subject','Duration (min)','Questions','Difficulty','Notes']
+  const rows = _allSessions.map(s => [
+    s.date||'',
+    (s.subject||'').replace(/,/g,';'),
+    s.duration||0,
+    s.questions||0,
+    s.difficulty||'',
+    (s.notes||'').replace(/,/g,';').replace(/\n/g,' ')
+  ])
+  const csv = [headers,...rows].map(r=>r.join(',')).join('\n')
+  const blob = new Blob([csv],{type:'text/csv'})
+  const a = document.createElement('a')
+  a.href = URL.createObjectURL(blob)
+  a.download = `studytrack_${new Date().toISOString().slice(0,10)}.csv`
+  a.click(); URL.revokeObjectURL(a.href)
+  showToast('CSV exported ✓')
+})
+
+// Sidebar
+fetch('/components/sidebar.html').then(r=>r.text()).then(data=>{
+  document.getElementById('sidebar-container').innerHTML=data
+  document.querySelectorAll('.sidebar .nav-item').forEach(l=>{
+    if(window.location.pathname.includes(l.getAttribute('href'))) l.classList.add('active')
+  })
+  const hb=document.getElementById('hamburger'),sb=document.getElementById('sidebar'),ov=document.getElementById('sidebarOverlay')
+  if(hb&&sb){
+    hb.addEventListener('click',()=>{sb.classList.toggle('open');ov.classList.toggle('open')})
+    ov.addEventListener('click',()=>{sb.classList.remove('open');ov.classList.remove('open')})
+  }
+})
+
+// Boot
+await ensureUser()
+await reload()
 </script>
 </body>
 </html>
