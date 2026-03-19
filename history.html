@@ -135,7 +135,6 @@ th.sorted{color:var(--accent);}
 
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
-
 const SUPABASE_URL = 'https://dvsvomzikboccrqmsnpj.supabase.co'
 const SUPABASE_ANON_KEY = 'sb_publishable_J1wtt_ykvjyMShnrLXgZUQ_he7cIo0E'
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
@@ -146,243 +145,89 @@ async function ensureUser() {
   const { data: { user } } = await supabase.auth.getUser()
   return user
 }
-
 async function loadSessions() {
-  const { data, error } = await supabase
-    .from('sessions').select('*').order('date', { ascending: false })
+  const { data, error } = await supabase.from('sessions').select('*').order('date', { ascending: false })
   if (error) { console.error(error); return [] }
-  return (data || []).map(s => ({
-    ...s,
-    duration:   s.duration_minutes,
-    questions:  s.questions_solved,
-    difficulty: cap(s.difficulty)
-  }))
+  return (data || []).map(s => ({ ...s, duration: s.duration_minutes, questions: s.questions_solved, difficulty: cap(s.difficulty) }))
 }
-
-async function deleteSession(id) {
-  const { error } = await supabase.from('sessions').delete().eq('id', id)
-  if (error) console.error(error)
-}
-
+async function deleteSession(id) { const { error } = await supabase.from('sessions').delete().eq('id', id); if (error) console.error(error) }
 async function updateSession(id, updates) {
-  const { error } = await supabase.from('sessions').update({
-    subject:          updates.subject,
-    duration_minutes: updates.duration,
-    questions_solved: updates.questions,
-    date:             updates.date,
-    difficulty:       updates.difficulty.toLowerCase(),
-    notes:            updates.notes
-  }).eq('id', id)
+  const { error } = await supabase.from('sessions').update({ subject: updates.subject, duration_minutes: updates.duration, questions_solved: updates.questions, date: updates.date, difficulty: updates.difficulty.toLowerCase(), notes: updates.notes }).eq('id', id)
   if (error) console.error(error)
 }
-
 function cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : '' }
-function fmtDur(m) { if (!m) return '–'; const h = Math.floor(m/60), r = m%60; return h ? (r ? `${h}h ${r}m` : `${h}h`) : `${r}m` }
-function fmtDate(iso) { if (!iso) return '–'; const [y,mo,d] = iso.split('-'); const M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; return `${M[+mo-1]} ${+d}, ${y}` }
+function fmtDur(m) { if (!m) return '–'; const h=Math.floor(m/60),r=m%60; return h?(r?`${h}h ${r}m`:`${h}h`):`${r}m` }
+function fmtDate(iso) { if (!iso) return '–'; const [y,mo,d]=iso.split('-'); const M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']; return `${M[+mo-1]} ${+d}, ${y}` }
 function esc(s) { return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') }
 function showToast(msg) { const t=document.getElementById('toast'),tx=document.getElementById('toastMsg'); if(!t)return; if(tx)tx.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500) }
 
 document.getElementById('dateBannerText').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})
 
-let _sortKey='date', _sortDir=-1, _deleteId=null, _editId=null, _allSessions=[]
+let _sortKey='date',_sortDir=-1,_deleteId=null,_editId=null,_allSessions=[]
 
 function render() {
-  const sessions = _allSessions
-  const search = document.getElementById('filterSearch').value.trim().toLowerCase()
-  const diff   = document.getElementById('filterDifficulty').value
-  const from   = document.getElementById('filterDateFrom').value
-  const to     = document.getElementById('filterDateTo').value
-
-  const totalMins = sessions.reduce((s,x)=>s+(+x.duration||0),0)
-  const totalQ    = sessions.reduce((s,x)=>s+(+x.questions||0),0)
-  document.getElementById('statSessions').textContent  = sessions.length
-  document.getElementById('statHours').textContent     = (totalMins/60).toFixed(1)
-  document.getElementById('statQuestions').textContent = totalQ
-  document.getElementById('heroSub').textContent = sessions.length === 0
-    ? 'No sessions logged yet'
-    : `${sessions.length} session${sessions.length!==1?'s':''} logged`
-
-  const subjectMap = {}
-  sessions.forEach(s=>{ const k=s.subject||'?'; subjectMap[k]=(subjectMap[k]||0)+s.duration })
-  const topSubj = Object.entries(subjectMap).sort((a,b)=>b[1]-a[1])[0]
-  document.getElementById('statBestSubject').textContent = topSubj ? topSubj[0] : '—'
-
-  let filtered = sessions.filter(s => {
-    if (search && !(s.subject??'').toLowerCase().includes(search)) return false
-    if (diff && s.difficulty !== diff) return false
-    if (from && s.date < from) return false
-    if (to && s.date > to) return false
+  const sessions=_allSessions,search=document.getElementById('filterSearch').value.trim().toLowerCase()
+  const diff=document.getElementById('filterDifficulty').value,from=document.getElementById('filterDateFrom').value,to=document.getElementById('filterDateTo').value
+  const totalMins=sessions.reduce((s,x)=>s+(+x.duration||0),0),totalQ=sessions.reduce((s,x)=>s+(+x.questions||0),0)
+  document.getElementById('statSessions').textContent=sessions.length
+  document.getElementById('statHours').textContent=(totalMins/60).toFixed(1)
+  document.getElementById('statQuestions').textContent=totalQ
+  document.getElementById('heroSub').textContent=sessions.length===0?'No sessions logged yet':`${sessions.length} session${sessions.length!==1?'s':''} logged`
+  const subjectMap={};sessions.forEach(s=>{const k=s.subject||'?';subjectMap[k]=(subjectMap[k]||0)+s.duration})
+  const topSubj=Object.entries(subjectMap).sort((a,b)=>b[1]-a[1])[0]
+  document.getElementById('statBestSubject').textContent=topSubj?topSubj[0]:'—'
+  let filtered=sessions.filter(s=>{
+    if(search&&!(s.subject??'').toLowerCase().includes(search))return false
+    if(diff&&s.difficulty!==diff)return false
+    if(from&&s.date<from)return false
+    if(to&&s.date>to)return false
     return true
   })
-
-  filtered.sort((a,b) => {
-    let va=a[_sortKey]??'', vb=b[_sortKey]??''
-    if (_sortKey==='duration'||_sortKey==='questions') { va=Number(va); vb=Number(vb) }
-    else { va=String(va).toLowerCase(); vb=String(vb).toLowerCase() }
-    return va<vb?-_sortDir:va>vb?_sortDir:0
-  })
-
-  document.getElementById('tableCount').textContent = `${filtered.length} result${filtered.length!==1?'s':''}`
-  const area = document.getElementById('tableArea')
-
-  if (filtered.length === 0) {
-    const noData = sessions.length === 0
-    area.innerHTML = `<div class="empty-state"><div class="empty-icon">${noData?'📚':'🔍'}</div><p class="empty-title">${noData?'No sessions yet':'No matches found'}</p><p class="empty-sub">${noData?'Start logging sessions to see history here.':'Try adjusting your filters.'}</p>${noData?`<a href="/log.html" class="btn btn-primary btn-sm" style="margin-top:.75rem">Log your first session</a>`:''}</div>`
-    return
-  }
-
-  const arrow = k => _sortKey===k ? `<span class="sort-arrow">${_sortDir===-1?'↓':'↑'}</span>` : `<span class="sort-arrow">↕</span>`
-  const sc    = k => _sortKey===k ? 'sorted' : ''
-  const rows  = filtered.map(s => `<tr>
-    <td class="td-date">${esc(fmtDate(s.date))}</td>
-    <td class="td-subject">${esc(s.subject??'–')}</td>
-    <td class="td-duration">${esc(fmtDur(s.duration))}</td>
-    <td class="td-questions">${s.questions>0?esc(s.questions):'–'}</td>
-    <td><span class="diff-chip ${esc(s.difficulty??'')}">${esc(s.difficulty??'–')}</span></td>
-    <td class="td-notes" title="${esc(s.notes??'')}">${s.notes?esc(s.notes):'<span style="opacity:.3">—</span>'}</td>
-    <td><div class="action-cell">
-      <button class="btn-edit" data-id="${s.id}">✏️</button>
-      <button class="btn-delete" data-id="${s.id}">🗑️</button>
-    </div></td>
-  </tr>`).join('')
-
-  area.innerHTML = `<div style="overflow-x:auto;"><table class="data-table"><thead><tr>
-    <th data-sort="date" class="${sc('date')}">Date${arrow('date')}</th>
-    <th data-sort="subject" class="${sc('subject')}">Subject${arrow('subject')}</th>
-    <th data-sort="duration" class="${sc('duration')}">Duration${arrow('duration')}</th>
-    <th data-sort="questions" class="${sc('questions')}">Questions${arrow('questions')}</th>
-    <th data-sort="difficulty" class="${sc('difficulty')}">Difficulty${arrow('difficulty')}</th>
-    <th>Notes</th><th></th>
-  </tr></thead><tbody>${rows}</tbody></table></div>`
-
-  area.querySelectorAll('th[data-sort]').forEach(th => {
-    th.addEventListener('click', () => {
-      const k = th.dataset.sort
-      _sortKey===k ? _sortDir*=-1 : (_sortKey=k, _sortDir=-1)
-      render()
-    })
-  })
-  area.querySelectorAll('.btn-delete').forEach(btn => {
-    btn.addEventListener('click', () => {
-      _deleteId = btn.dataset.id
-      document.getElementById('confirmOverlay').classList.add('open')
-    })
-  })
-  area.querySelectorAll('.btn-edit').forEach(btn => {
-    btn.addEventListener('click', () => {
-      _editId = btn.dataset.id
-      const s = _allSessions.find(x => x.id === _editId)
-      if (!s) return
-      document.getElementById('editSubject').value   = s.subject||''
-      document.getElementById('editDuration').value  = s.duration||''
-      document.getElementById('editQuestions').value = s.questions||''
-      document.getElementById('editDate').value      = s.date||''
-      document.getElementById('editDifficulty').value= s.difficulty||'Medium'
-      document.getElementById('editNotes').value     = s.notes||''
-      document.getElementById('editOverlay').classList.add('open')
-    })
-  })
+  filtered.sort((a,b)=>{let va=a[_sortKey]??'',vb=b[_sortKey]??'';if(_sortKey==='duration'||_sortKey==='questions'){va=Number(va);vb=Number(vb)}else{va=String(va).toLowerCase();vb=String(vb).toLowerCase()};return va<vb?-_sortDir:va>vb?_sortDir:0})
+  document.getElementById('tableCount').textContent=`${filtered.length} result${filtered.length!==1?'s':''}`
+  const area=document.getElementById('tableArea')
+  if(filtered.length===0){const noData=sessions.length===0;area.innerHTML=`<div class="empty-state"><div class="empty-icon">${noData?'📚':'🔍'}</div><p class="empty-title">${noData?'No sessions yet':'No matches found'}</p><p class="empty-sub">${noData?'Start logging sessions to see history here.':'Try adjusting your filters.'}</p>${noData?`<a href="/log.html" class="btn btn-primary btn-sm" style="margin-top:.75rem">Log your first session</a>`:''}</div>`;return}
+  const arrow=k=>_sortKey===k?`<span class="sort-arrow">${_sortDir===-1?'↓':'↑'}</span>`:`<span class="sort-arrow">↕</span>`
+  const sc=k=>_sortKey===k?'sorted':''
+  const rows=filtered.map(s=>`<tr><td class="td-date">${esc(fmtDate(s.date))}</td><td class="td-subject">${esc(s.subject??'–')}</td><td class="td-duration">${esc(fmtDur(s.duration))}</td><td class="td-questions">${s.questions>0?esc(s.questions):'–'}</td><td><span class="diff-chip ${esc(s.difficulty??'')}">${esc(s.difficulty??'–')}</span></td><td class="td-notes" title="${esc(s.notes??'')}">${s.notes?esc(s.notes):'<span style="opacity:.3">—</span>'}</td><td><div class="action-cell"><button class="btn-edit" data-id="${s.id}">✏️</button><button class="btn-delete" data-id="${s.id}">🗑️</button></div></td></tr>`).join('')
+  area.innerHTML=`<div style="overflow-x:auto;"><table class="data-table"><thead><tr><th data-sort="date" class="${sc('date')}">Date${arrow('date')}</th><th data-sort="subject" class="${sc('subject')}">Subject${arrow('subject')}</th><th data-sort="duration" class="${sc('duration')}">Duration${arrow('duration')}</th><th data-sort="questions" class="${sc('questions')}">Questions${arrow('questions')}</th><th data-sort="difficulty" class="${sc('difficulty')}">Difficulty${arrow('difficulty')}</th><th>Notes</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`
+  area.querySelectorAll('th[data-sort]').forEach(th=>{th.addEventListener('click',()=>{const k=th.dataset.sort;_sortKey===k?_sortDir*=-1:(_sortKey=k,_sortDir=-1);render()})})
+  area.querySelectorAll('.btn-delete').forEach(btn=>{btn.addEventListener('click',()=>{_deleteId=btn.dataset.id;document.getElementById('confirmOverlay').classList.add('open')})})
+  area.querySelectorAll('.btn-edit').forEach(btn=>{btn.addEventListener('click',()=>{_editId=btn.dataset.id;const s=_allSessions.find(x=>x.id===_editId);if(!s)return;document.getElementById('editSubject').value=s.subject||'';document.getElementById('editDuration').value=s.duration||'';document.getElementById('editQuestions').value=s.questions||'';document.getElementById('editDate').value=s.date||'';document.getElementById('editDifficulty').value=s.difficulty||'Medium';document.getElementById('editNotes').value=s.notes||'';document.getElementById('editOverlay').classList.add('open')})})
 }
+async function reload(){_allSessions=await loadSessions();render()}
 
-async function reload() {
-  _allSessions = await loadSessions()
-  render()
+document.getElementById('confirmCancel').addEventListener('click',()=>{document.getElementById('confirmOverlay').classList.remove('open');_deleteId=null})
+document.getElementById('confirmOk').addEventListener('click',async()=>{if(!_deleteId)return;await deleteSession(_deleteId);document.getElementById('confirmOverlay').classList.remove('open');_deleteId=null;showToast('Session deleted');await reload()})
+document.getElementById('confirmOverlay').addEventListener('click',e=>{if(e.target===document.getElementById('confirmOverlay')){document.getElementById('confirmOverlay').classList.remove('open');_deleteId=null}})
+document.getElementById('editSaveBtn').addEventListener('click',async()=>{if(!_editId)return;const subj=document.getElementById('editSubject').value.trim();const dur=parseInt(document.getElementById('editDuration').value);if(!subj||!dur){showToast('Subject and duration required');return}document.getElementById('editSaveBtn').textContent='Saving…';await updateSession(_editId,{subject:subj,duration:dur,questions:parseInt(document.getElementById('editQuestions').value)||0,date:document.getElementById('editDate').value,difficulty:document.getElementById('editDifficulty').value,notes:document.getElementById('editNotes').value.trim()});document.getElementById('editOverlay').classList.remove('open');document.getElementById('editSaveBtn').textContent='Save Changes';_editId=null;showToast('Session updated ✓');await reload()})
+document.getElementById('editCancelBtn').addEventListener('click',()=>{document.getElementById('editOverlay').classList.remove('open');_editId=null})
+document.getElementById('editOverlay').addEventListener('click',e=>{if(e.target===document.getElementById('editOverlay')){document.getElementById('editOverlay').classList.remove('open');_editId=null}})
+;['filterSearch','filterDifficulty','filterDateFrom','filterDateTo'].forEach(id=>{document.getElementById(id).addEventListener('input',render);document.getElementById(id).addEventListener('change',render)})
+document.getElementById('btnClearFilters').addEventListener('click',()=>{;['filterSearch','filterDifficulty','filterDateFrom','filterDateTo'].forEach(id=>document.getElementById(id).value='');render()})
+document.getElementById('exportCSVBtn').addEventListener('click',()=>{if(!_allSessions.length){showToast('No sessions to export');return}const headers=['Date','Subject','Duration (min)','Questions','Difficulty','Notes'];const rows=_allSessions.map(s=>[s.date||'',(s.subject||'').replace(/,/g,';'),s.duration||0,s.questions||0,s.difficulty||'',(s.notes||'').replace(/,/g,';').replace(/\n/g,' ')]);const csv=[headers,...rows].map(r=>r.join(',')).join('\n');const blob=new Blob([csv],{type:'text/csv'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`studytrack_${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(a.href);showToast('CSV exported ✓')})
+
+const user = await ensureUser()
+function updateSidebarAuth() {
+  const nameEl=document.getElementById('sidebarName'),labelEl=document.getElementById('sidebarAuthLabel')
+  const avatarEl=document.getElementById('sidebarAvatar'),btnEl=document.getElementById('sidebarAuthBtn')
+  if(!nameEl)return
+  if(user&&!user.is_anonymous){
+    const name=user.user_metadata?.full_name||user.user_metadata?.name||user.email||'User'
+    const avatar=user.user_metadata?.avatar_url
+    nameEl.textContent=name.split(' ')[0];labelEl.textContent='signed in with Google'
+    if(avatar){avatarEl.innerHTML=`<img src="${avatar}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;"/>`}else{avatarEl.textContent=name.charAt(0).toUpperCase()}
+    btnEl.textContent='Sign out';btnEl.href='#'
+    btnEl.addEventListener('click',async(e)=>{e.preventDefault();await supabase.auth.signOut();window.location.href='/login.html'})
+  } else if(user&&user.is_anonymous){nameEl.textContent='Guest';labelEl.textContent='anonymous session';btnEl.textContent='Sign in';btnEl.href='/login.html'}
 }
-
-// Delete
-document.getElementById('confirmCancel').addEventListener('click', () => {
-  document.getElementById('confirmOverlay').classList.remove('open'); _deleteId=null
-})
-document.getElementById('confirmOk').addEventListener('click', async () => {
-  if (!_deleteId) return
-  await deleteSession(_deleteId)
-  document.getElementById('confirmOverlay').classList.remove('open')
-  _deleteId = null
-  showToast('Session deleted')
-  await reload()
-})
-document.getElementById('confirmOverlay').addEventListener('click', e => {
-  if (e.target===document.getElementById('confirmOverlay')) {
-    document.getElementById('confirmOverlay').classList.remove('open'); _deleteId=null
-  }
-})
-
-// Edit
-document.getElementById('editSaveBtn').addEventListener('click', async () => {
-  if (!_editId) return
-  const subj = document.getElementById('editSubject').value.trim()
-  const dur  = parseInt(document.getElementById('editDuration').value)
-  if (!subj || !dur) { showToast('Subject and duration required'); return }
-  document.getElementById('editSaveBtn').textContent = 'Saving…'
-  await updateSession(_editId, {
-    subject:    subj,
-    duration:   dur,
-    questions:  parseInt(document.getElementById('editQuestions').value)||0,
-    date:       document.getElementById('editDate').value,
-    difficulty: document.getElementById('editDifficulty').value,
-    notes:      document.getElementById('editNotes').value.trim()
-  })
-  document.getElementById('editOverlay').classList.remove('open')
-  document.getElementById('editSaveBtn').textContent = 'Save Changes'
-  _editId = null
-  showToast('Session updated ✓')
-  await reload()
-})
-document.getElementById('editCancelBtn').addEventListener('click', () => {
-  document.getElementById('editOverlay').classList.remove('open'); _editId=null
-})
-document.getElementById('editOverlay').addEventListener('click', e => {
-  if (e.target===document.getElementById('editOverlay')) {
-    document.getElementById('editOverlay').classList.remove('open'); _editId=null
-  }
-})
-
-// Filters
-;['filterSearch','filterDifficulty','filterDateFrom','filterDateTo'].forEach(id => {
-  document.getElementById(id).addEventListener('input', render)
-  document.getElementById(id).addEventListener('change', render)
-})
-document.getElementById('btnClearFilters').addEventListener('click', () => {
-  ;['filterSearch','filterDifficulty','filterDateFrom','filterDateTo'].forEach(id=>document.getElementById(id).value='')
-  render()
-})
-
-// Export CSV
-document.getElementById('exportCSVBtn').addEventListener('click', () => {
-  if (!_allSessions.length) { showToast('No sessions to export'); return }
-  const headers = ['Date','Subject','Duration (min)','Questions','Difficulty','Notes']
-  const rows = _allSessions.map(s => [
-    s.date||'',
-    (s.subject||'').replace(/,/g,';'),
-    s.duration||0,
-    s.questions||0,
-    s.difficulty||'',
-    (s.notes||'').replace(/,/g,';').replace(/\n/g,' ')
-  ])
-  const csv = [headers,...rows].map(r=>r.join(',')).join('\n')
-  const blob = new Blob([csv],{type:'text/csv'})
-  const a = document.createElement('a')
-  a.href = URL.createObjectURL(blob)
-  a.download = `studytrack_${new Date().toISOString().slice(0,10)}.csv`
-  a.click(); URL.revokeObjectURL(a.href)
-  showToast('CSV exported ✓')
-})
-
-// Sidebar
 fetch('/components/sidebar.html').then(r=>r.text()).then(data=>{
   document.getElementById('sidebar-container').innerHTML=data
-  document.querySelectorAll('.sidebar .nav-item').forEach(l=>{
-    if(window.location.pathname.includes(l.getAttribute('href'))) l.classList.add('active')
-  })
+  updateSidebarAuth()
+  document.querySelectorAll('.sidebar .nav-item').forEach(l=>{if(window.location.pathname.includes(l.getAttribute('href')))l.classList.add('active')})
   const hb=document.getElementById('hamburger'),sb=document.getElementById('sidebar'),ov=document.getElementById('sidebarOverlay')
-  if(hb&&sb){
-    hb.addEventListener('click',()=>{sb.classList.toggle('open');ov.classList.toggle('open')})
-    ov.addEventListener('click',()=>{sb.classList.remove('open');ov.classList.remove('open')})
-  }
+  if(hb&&sb){hb.addEventListener('click',()=>{sb.classList.toggle('open');ov.classList.toggle('open')});ov.addEventListener('click',()=>{sb.classList.remove('open');ov.classList.remove('open')})}
 })
-
-// Boot
-await ensureUser()
 await reload()
 </script>
 </body>
