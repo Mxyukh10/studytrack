@@ -37,54 +37,37 @@
 
 <div class="form-card animate-in">
   <div class="form-grid">
-
     <div class="form-group full-width">
       <label class="form-label"><span class="label-icon">📖</span> Subject</label>
       <input type="text" class="form-input" id="inputSubject" placeholder="e.g. DSA, Physics, Mathematics…" autocomplete="off"/>
     </div>
-
     <div class="form-group">
       <label class="form-label"><span class="label-icon">⏱️</span> Duration (minutes)</label>
       <input type="number" class="form-input" id="inputDuration" placeholder="e.g. 90" min="1" max="720"/>
       <span class="form-hint" id="durationHint">— hrs — mins</span>
     </div>
-
     <div class="form-group">
       <label class="form-label"><span class="label-icon">🧩</span> Questions Solved</label>
       <input type="number" class="form-input" id="inputQuestions" placeholder="e.g. 20" min="0"/>
       <span class="form-hint">Leave 0 if not applicable</span>
     </div>
-
     <div class="form-group">
       <label class="form-label"><span class="label-icon">📅</span> Date</label>
       <input type="date" class="form-input" id="inputDate" required/>
     </div>
-
     <div class="form-group">
       <label class="form-label"><span class="label-icon">📝</span> Notes</label>
       <input type="text" class="form-input" id="inputNotes" placeholder="What did you cover? Any blockers?"/>
     </div>
-
     <div class="form-group full-width">
       <label class="form-label"><span class="label-icon">⚡</span> Difficulty</label>
       <div class="difficulty-picker">
-        <div>
-          <input type="radio" name="difficulty" value="Easy" class="diff-option" id="diffEasy"/>
-          <label class="diff-label" for="diffEasy">😊 Easy</label>
-        </div>
-        <div>
-          <input type="radio" name="difficulty" value="Medium" class="diff-option" id="diffMedium" checked/>
-          <label class="diff-label" for="diffMedium">😤 Medium</label>
-        </div>
-        <div>
-          <input type="radio" name="difficulty" value="Hard" class="diff-option" id="diffHard"/>
-          <label class="diff-label" for="diffHard">🔥 Hard</label>
-        </div>
+        <div><input type="radio" name="difficulty" value="Easy" class="diff-option" id="diffEasy"/><label class="diff-label" for="diffEasy">😊 Easy</label></div>
+        <div><input type="radio" name="difficulty" value="Medium" class="diff-option" id="diffMedium" checked/><label class="diff-label" for="diffMedium">😤 Medium</label></div>
+        <div><input type="radio" name="difficulty" value="Hard" class="diff-option" id="diffHard"/><label class="diff-label" for="diffHard">🔥 Hard</label></div>
       </div>
     </div>
-
   </div>
-
   <div class="form-actions">
     <button class="btn btn-primary" id="submitSessionBtn" style="flex:1;justify-content:center;">✅ Save Session</button>
     <button class="btn btn-secondary" id="clearFormBtn">🗑️ Clear</button>
@@ -116,67 +99,61 @@
 
 <script type="module" src="/script.js"></script>
 <script type="module">
-fetch("/components/sidebar.html").then(r=>r.text()).then(data=>{
-  document.getElementById("sidebar-container").innerHTML=data;
-  document.querySelectorAll(".sidebar .nav-item").forEach(l=>{
-    if(window.location.pathname.includes(l.getAttribute("href"))) l.classList.add("active");
-  });
-  const hb=document.getElementById("hamburger"),sb=document.getElementById("sidebar"),ov=document.getElementById("sidebarOverlay");
-  if(hb&&sb){
-    hb.addEventListener("click",()=>{sb.classList.toggle("open");ov.classList.toggle("open");});
-    ov.addEventListener("click",()=>{sb.classList.remove("open");ov.classList.remove("open");});
-  }
-});
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+const supabase = createClient('https://dvsvomzikboccrqmsnpj.supabase.co','sb_publishable_J1wtt_ykvjyMShnrLXgZUQ_he7cIo0E')
+const { data: { user } } = await supabase.auth.getUser()
 
-const subjectEl=document.getElementById("inputSubject"),
-      durationEl=document.getElementById("inputDuration"),
-      questionsEl=document.getElementById("inputQuestions"),
-      dateEl=document.getElementById("inputDate"),
-      notesEl=document.getElementById("inputNotes"),
-      hintEl=document.getElementById("durationHint");
-const DIFF_EMOJI={Easy:"😊 Easy",Medium:"😤 Medium",Hard:"🔥 Hard"};
-const DIFF_COLOR={Easy:"var(--easy)",Medium:"var(--medium)",Hard:"var(--hard)"};
-function updatePreview(){
-  document.getElementById("previewSubject").textContent=subjectEl.value.trim()||"—";
-  const mins=parseInt(durationEl.value)||0;
-  if(mins>0){
-    const h=Math.floor(mins/60),m=mins%60;
-    const p=[]; if(h>0)p.push(h+"h"); if(m>0)p.push(m+"m");
-    document.getElementById("previewDuration").textContent=p.join(" ");
-    hintEl.textContent=p.join(" ");
-  } else { document.getElementById("previewDuration").textContent="—"; hintEl.textContent="— hrs — mins"; }
-  const q=parseInt(questionsEl.value);
-  document.getElementById("previewQuestions").textContent=(!isNaN(q)&&q>0)?q:"—";
-  const diff=document.querySelector("input[name='difficulty']:checked");
-  if(diff){
-    const pd=document.getElementById("previewDifficulty");
-    pd.textContent=DIFF_EMOJI[diff.value]||diff.value;
-    pd.style.color=DIFF_COLOR[diff.value]||"";
+function updateSidebarAuth() {
+  const nameEl=document.getElementById('sidebarName'),labelEl=document.getElementById('sidebarAuthLabel')
+  const avatarEl=document.getElementById('sidebarAvatar'),btnEl=document.getElementById('sidebarAuthBtn')
+  if(!nameEl)return
+  if(user&&!user.is_anonymous){
+    const name=user.user_metadata?.full_name||user.user_metadata?.name||user.email||'User'
+    const avatar=user.user_metadata?.avatar_url
+    nameEl.textContent=name.split(' ')[0]; labelEl.textContent='signed in with Google'
+    if(avatar){avatarEl.innerHTML=`<img src="${avatar}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;"/>`}
+    else{avatarEl.textContent=name.charAt(0).toUpperCase()}
+    btnEl.textContent='Sign out'; btnEl.href='#'
+    btnEl.addEventListener('click',async(e)=>{e.preventDefault();await supabase.auth.signOut();window.location.href='/login.html'})
+  } else if(user&&user.is_anonymous){
+    nameEl.textContent='Guest'; labelEl.textContent='anonymous session'
+    btnEl.textContent='Sign in'; btnEl.href='/login.html'
   }
-  if(dateEl.value){
-    const[y,m,d]=dateEl.value.split("-");
-    document.getElementById("previewDate").textContent=`${d}-${m}-${y}`;
-  } else { document.getElementById("previewDate").textContent="—"; }
-  const notes=notesEl.value.trim();
-  if(notes){
-    document.getElementById("previewNotes").textContent=notes;
-    document.getElementById("previewNotesRow").style.display="flex";
-  } else { document.getElementById("previewNotesRow").style.display="none"; }
 }
-[subjectEl,durationEl,questionsEl,dateEl,notesEl].forEach(el=>el.addEventListener("input",updatePreview));
-document.querySelectorAll("input[name='difficulty']").forEach(r=>r.addEventListener("change",updatePreview));
-document.getElementById("clearFormBtn").addEventListener("click",()=>{
-  subjectEl.value=""; durationEl.value=""; questionsEl.value=""; notesEl.value="";
-  document.getElementById("diffMedium").checked=true; updatePreview();
-});
+
+fetch("/components/sidebar.html").then(r=>r.text()).then(data=>{
+  document.getElementById("sidebar-container").innerHTML=data
+  updateSidebarAuth()
+  document.querySelectorAll(".sidebar .nav-item").forEach(l=>{if(window.location.pathname.includes(l.getAttribute("href")))l.classList.add("active")})
+  const hb=document.getElementById("hamburger"),sb=document.getElementById("sidebar"),ov=document.getElementById("sidebarOverlay")
+  if(hb&&sb){hb.addEventListener("click",()=>{sb.classList.toggle("open");ov.classList.toggle("open")});ov.addEventListener("click",()=>{sb.classList.remove("open");ov.classList.remove("open")})}
+})
+
+const subjectEl=document.getElementById("inputSubject"),durationEl=document.getElementById("inputDuration"),
+      questionsEl=document.getElementById("inputQuestions"),dateEl=document.getElementById("inputDate"),
+      notesEl=document.getElementById("inputNotes"),hintEl=document.getElementById("durationHint")
+const DIFF_EMOJI={Easy:"😊 Easy",Medium:"😤 Medium",Hard:"🔥 Hard"}
+const DIFF_COLOR={Easy:"var(--easy)",Medium:"var(--medium)",Hard:"var(--hard)"}
+function updatePreview(){
+  document.getElementById("previewSubject").textContent=subjectEl.value.trim()||"—"
+  const mins=parseInt(durationEl.value)||0
+  if(mins>0){const h=Math.floor(mins/60),m=mins%60;const p=[];if(h>0)p.push(h+"h");if(m>0)p.push(m+"m");document.getElementById("previewDuration").textContent=p.join(" ");hintEl.textContent=p.join(" ")}
+  else{document.getElementById("previewDuration").textContent="—";hintEl.textContent="— hrs — mins"}
+  const q=parseInt(questionsEl.value)
+  document.getElementById("previewQuestions").textContent=(!isNaN(q)&&q>0)?q:"—"
+  const diff=document.querySelector("input[name='difficulty']:checked")
+  if(diff){const pd=document.getElementById("previewDifficulty");pd.textContent=DIFF_EMOJI[diff.value]||diff.value;pd.style.color=DIFF_COLOR[diff.value]||""}
+  if(dateEl.value){const[y,m,d]=dateEl.value.split("-");document.getElementById("previewDate").textContent=`${d}-${m}-${y}`}
+  else{document.getElementById("previewDate").textContent="—"}
+  const notes=notesEl.value.trim()
+  if(notes){document.getElementById("previewNotes").textContent=notes;document.getElementById("previewNotesRow").style.display="flex"}
+  else{document.getElementById("previewNotesRow").style.display="none"}
+}
+;[subjectEl,durationEl,questionsEl,dateEl,notesEl].forEach(el=>el.addEventListener("input",updatePreview))
+document.querySelectorAll("input[name='difficulty']").forEach(r=>r.addEventListener("change",updatePreview))
+document.getElementById("clearFormBtn").addEventListener("click",()=>{subjectEl.value="";durationEl.value="";questionsEl.value="";notesEl.value="";document.getElementById("diffMedium").checked=true;updatePreview()})
 updatePreview();
-(function(){
-  const p=new URLSearchParams(window.location.search);
-  const s=p.get("subject"), d=p.get("duration");
-  if(s) subjectEl.value=s;
-  if(d) durationEl.value=d;
-  if(s||d) updatePreview();
-})();
+(function(){const p=new URLSearchParams(window.location.search);const s=p.get("subject"),d=p.get("duration");if(s)subjectEl.value=s;if(d)durationEl.value=d;if(s||d)updatePreview()})()
 </script>
 </body>
 </html>
