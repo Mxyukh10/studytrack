@@ -31,10 +31,7 @@
 <body>
 
 <div class="mobile-header">
-  <div class="logo-mark">
-    <div class="logo-icon">📚</div>
-    <div class="logo-text">Study<span>Track</span></div>
-  </div>
+  <img src="/logo.png" alt="StudyTrack" style="height:36px;width:auto;"/>
   <button class="hamburger" id="hamburger">☰</button>
 </div>
 
@@ -54,13 +51,9 @@
 <div class="app-shell">
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-logo">
-    <div class="logo-mark">
-      <div class="logo-icon">📚</div>
-      <div>
-        <div class="logo-text">Study<span>Track</span></div>
-        <div class="logo-tagline">// track · improve · repeat</div>
-      </div>
-    </div>
+    <a href="/dashboard.html" style="display:block;padding:4px 0;">
+      <img src="/logo.png" alt="StudyTrack" style="width:160px;height:auto;display:block;"/>
+    </a>
   </div>
   <nav class="sidebar-nav">
     <div class="nav-label">Main</div>
@@ -83,18 +76,13 @@
 </aside>
 
 <main class="main-content">
-<div class="date-banner">
-  <div class="date-dot"></div>
-  <span id="dateBannerText"></span>
-</div>
-
+<div class="date-banner"><div class="date-dot"></div><span id="dateBannerText"></span></div>
 <div class="page-header">
   <h1 class="page-title">Your <span>Profile</span></h1>
   <p class="page-subtitle">Tell StudyTrack a little about yourself.</p>
 </div>
 
 <div style="display:grid;grid-template-columns:1fr 300px;gap:24px;align-items:start;">
-
 <div class="form-card">
   <div class="form-grid">
     <div class="form-group full-width"><label class="form-label">Name</label><input class="form-input" id="profileName" placeholder="Your name"/></div>
@@ -103,9 +91,7 @@
     <div class="form-group"><label class="form-label">Daily Study Goal (minutes)</label><input type="number" class="form-input" id="profileDailyGoal" placeholder="e.g. 180" min="0"/></div>
     <div class="form-group"><label class="form-label">Weekly Study Goal (hours)</label><input type="number" class="form-input" id="profileWeeklyGoal" placeholder="e.g. 20" min="0"/></div>
   </div>
-  <div class="form-actions">
-    <button class="btn btn-primary" id="saveProfileBtn" style="flex:1;">Save Profile</button>
-  </div>
+  <div class="form-actions"><button class="btn btn-primary" id="saveProfileBtn" style="flex:1;">Save Profile</button></div>
   <div class="card" style="margin-top:20px;">
     <div class="section-title">Profile Summary</div>
     <div style="display:flex;flex-direction:column;gap:2px;margin-top:4px;">
@@ -129,17 +115,13 @@
       </button>
     </div>
   </div>
-
   <div class="section-title" style="color:#ff6b6b;margin-top:8px;">⚠ Danger Zone</div>
   <div class="card" style="margin-top:10px;">
     <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:16px;">Permanently delete all your study sessions and profile data.</p>
     <button class="btn btn-danger" id="resetDataBtn">Reset All Data</button>
   </div>
-  <div class="storage-notice" style="margin-top:16px;">
-    <span>☁️</span><span>Your data is securely synced to the cloud.</span>
-  </div>
+  <div class="storage-notice" style="margin-top:16px;"><span>☁️</span><span>Your data is securely synced to the cloud.</span></div>
 </div>
-
 </div>
 </main>
 </div>
@@ -149,78 +131,34 @@
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 const supabase = createClient('https://dvsvomzikboccrqmsnpj.supabase.co','sb_publishable_J1wtt_ykvjyMShnrLXgZUQ_he7cIo0E')
-
 function toast(msg){const t=document.getElementById('toast'),tx=document.getElementById('toastMsg');tx.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500)}
-function updateSummary(){
-  document.getElementById('summaryName').textContent=document.getElementById('profileName').value||'—'
-  document.getElementById('summaryAge').textContent=document.getElementById('profileAge').value||'—'
-  document.getElementById('summarySchool').textContent=document.getElementById('profileSchool').value||'—'
-  const dg=document.getElementById('profileDailyGoal').value,wg=document.getElementById('profileWeeklyGoal').value
-  document.getElementById('summaryDailyGoal').textContent=dg?dg+' min':'—'
-  document.getElementById('summaryWeeklyGoal').textContent=wg?wg+' hrs':'—'
-}
+function updateSummary(){document.getElementById('summaryName').textContent=document.getElementById('profileName').value||'—';document.getElementById('summaryAge').textContent=document.getElementById('profileAge').value||'—';document.getElementById('summarySchool').textContent=document.getElementById('profileSchool').value||'—';const dg=document.getElementById('profileDailyGoal').value,wg=document.getElementById('profileWeeklyGoal').value;document.getElementById('summaryDailyGoal').textContent=dg?dg+' min':'—';document.getElementById('summaryWeeklyGoal').textContent=wg?wg+' hrs':'—'}
 document.getElementById('dateBannerText').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})
 const hb=document.getElementById('hamburger'),sb=document.getElementById('sidebar'),ov=document.getElementById('sidebarOverlay')
 if(hb&&sb){hb.addEventListener('click',()=>{sb.classList.toggle('open');ov.classList.toggle('open')});ov.addEventListener('click',()=>{sb.classList.remove('open');ov.classList.remove('open')})}
 ;['profileName','profileAge','profileSchool','profileDailyGoal','profileWeeklyGoal'].forEach(id=>document.getElementById(id).addEventListener('input',updateSummary))
-
-const {data:{session}}=await supabase.auth.getSession()
-if(!session) await supabase.auth.signInAnonymously()
-const {data:{user}}=await supabase.auth.getUser()
-
-// Streak
-const {data:sessData}=await supabase.from('sessions').select('date').eq('user_id',user.id)
+const{data:{session}}=await supabase.auth.getSession()
+if(!session)await supabase.auth.signInAnonymously()
+const{data:{user}}=await supabase.auth.getUser()
+const{data:sessData}=await supabase.from('sessions').select('date').eq('user_id',user.id)
 const sessions=sessData||[]
 function getStreak(){if(!sessions.length)return 0;const dates=[...new Set(sessions.map(s=>s.date))].sort((a,b)=>new Date(b)-new Date(a));let streak=0,current=new Date();current.setHours(0,0,0,0);for(let d of dates){const sd=new Date(d);sd.setHours(0,0,0,0);const diff=(current-sd)/86400000;if(diff===0){streak++;current.setDate(current.getDate()-1)}else if(diff===1&&streak===0){streak++;current.setDate(current.getDate()-2)}else break}return streak}
 document.getElementById('sidebarStreak').textContent=getStreak()+' days'
-
-// Auth card
 const authContent=document.getElementById('authContent')
 if(user&&!user.is_anonymous){
-  const name=user.user_metadata?.full_name||user.user_metadata?.name||user.email||'User'
-  const email=user.email||''
-  const avatar=user.user_metadata?.avatar_url
+  const name=user.user_metadata?.full_name||user.user_metadata?.name||user.email||'User',email=user.email||'',avatar=user.user_metadata?.avatar_url
   authContent.innerHTML=`<div class="auth-badge google">✓ Signed in with Google</div><div class="auth-user-row"><div class="auth-avatar">${avatar?`<img src="${avatar}"/>`:`${name.charAt(0)}`}</div><div><div class="auth-user-name">${name}</div><div class="auth-user-email">${email}</div></div></div><button class="btn-signout" id="btnSignOut">Sign out</button>`
   document.getElementById('btnSignOut').addEventListener('click',async()=>{await supabase.auth.signOut();window.location.href='/login.html'})
-  // Auto-fill name if empty
-  const {data:existingProfile}=await supabase.from('profiles').select('name').eq('id',user.id).single()
-  if(!existingProfile?.name) document.getElementById('profileName').value=name.split(' ')[0]
-} else {
-  document.getElementById('btnGoogleSignIn').addEventListener('click',async()=>{
-    await supabase.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.origin+'/profile.html'}})
-  })
-}
-
-// Load profile
-const {data:profile}=await supabase.from('profiles').select('*').eq('id',user.id).single()
-if(profile){
-  if(profile.name) document.getElementById('profileName').value=profile.name
-  if(profile.age) document.getElementById('profileAge').value=profile.age
-  if(profile.school) document.getElementById('profileSchool').value=profile.school
-  if(profile.daily_goal_minutes) document.getElementById('profileDailyGoal').value=profile.daily_goal_minutes
-  if(profile.weekly_goal_hours) document.getElementById('profileWeeklyGoal').value=profile.weekly_goal_hours
-}
+  const{data:existingProfile}=await supabase.from('profiles').select('name').eq('id',user.id).single()
+  if(!existingProfile?.name)document.getElementById('profileName').value=name.split(' ')[0]
+}else{document.getElementById('btnGoogleSignIn').addEventListener('click',async()=>{await supabase.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.location.origin+'/profile.html'}})})}
+const{data:profile}=await supabase.from('profiles').select('*').eq('id',user.id).single()
+if(profile){if(profile.name)document.getElementById('profileName').value=profile.name;if(profile.age)document.getElementById('profileAge').value=profile.age;if(profile.school)document.getElementById('profileSchool').value=profile.school;if(profile.daily_goal_minutes)document.getElementById('profileDailyGoal').value=profile.daily_goal_minutes;if(profile.weekly_goal_hours)document.getElementById('profileWeeklyGoal').value=profile.weekly_goal_hours}
 updateSummary()
-
-// Save
-document.getElementById('saveProfileBtn').addEventListener('click',async()=>{
-  const btn=document.getElementById('saveProfileBtn');btn.textContent='Saving…';btn.disabled=true
-  const {error}=await supabase.from('profiles').upsert({id:user.id,name:document.getElementById('profileName').value.trim(),age:Number(document.getElementById('profileAge').value)||null,school:document.getElementById('profileSchool').value.trim(),daily_goal_minutes:Number(document.getElementById('profileDailyGoal').value)||0,weekly_goal_hours:Number(document.getElementById('profileWeeklyGoal').value)||0})
-  btn.textContent='Save Profile';btn.disabled=false
-  if(error){toast('Error saving');console.error(error);return}
-  updateSummary();toast('Profile saved ✓')
-})
-
-// Reset
+document.getElementById('saveProfileBtn').addEventListener('click',async()=>{const btn=document.getElementById('saveProfileBtn');btn.textContent='Saving…';btn.disabled=true;const{error}=await supabase.from('profiles').upsert({id:user.id,name:document.getElementById('profileName').value.trim(),age:Number(document.getElementById('profileAge').value)||null,school:document.getElementById('profileSchool').value.trim(),daily_goal_minutes:Number(document.getElementById('profileDailyGoal').value)||0,weekly_goal_hours:Number(document.getElementById('profileWeeklyGoal').value)||0});btn.textContent='Save Profile';btn.disabled=false;if(error){toast('Error saving');console.error(error);return}updateSummary();toast('Profile saved ✓')})
 document.getElementById('resetDataBtn').addEventListener('click',()=>document.getElementById('confirmOverlay').classList.add('open'))
 document.getElementById('confirmCancel').addEventListener('click',()=>document.getElementById('confirmOverlay').classList.remove('open'))
-document.getElementById('confirmOk').addEventListener('click',async()=>{
-  await supabase.from('sessions').delete().eq('user_id',user.id)
-  await supabase.from('profiles').delete().eq('id',user.id)
-  document.getElementById('confirmOverlay').classList.remove('open')
-  toast('All data deleted!')
-  setTimeout(()=>location.reload(),1000)
-})
+document.getElementById('confirmOk').addEventListener('click',async()=>{await supabase.from('sessions').delete().eq('user_id',user.id);await supabase.from('profiles').delete().eq('id',user.id);document.getElementById('confirmOverlay').classList.remove('open');toast('All data deleted!');setTimeout(()=>location.reload(),1000)})
 </script>
 </body>
 </html>
