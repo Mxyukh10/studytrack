@@ -95,8 +95,8 @@
 </div>
 
 <div class="storage-notice">
-  <span>🔒</span>
-  <span>All data is stored locally on this device. Nothing is synced across devices or sent to any server.</span>
+  <span>☁️</span>
+  <span>Your data is securely synced to the cloud and available on all your devices.</span>
 </div>
 
 </main>
@@ -104,12 +104,11 @@
 
 <div class="toast" id="toast"><span id="toastMsg">Saved</span></div>
 
-<script src="/script.js"></script>
-<script>
+<script type="module" src="/script.js"></script>
+<script type="module">
 fetch("/components/sidebar.html")
 .then(r=>r.text()).then(data=>{
   document.getElementById("sidebar-container").innerHTML=data;
-  updateStreakBadge();
   const hb=document.getElementById("hamburgerBtn"),sb=document.getElementById("sidebar"),ov=document.getElementById("sidebarOverlay");
   if(hb&&sb){
     hb.addEventListener("click",()=>{sb.classList.toggle("open");ov.classList.toggle("open");});
